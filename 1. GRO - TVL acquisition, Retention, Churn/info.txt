@@ -1,3 +1,4 @@
 dashboard       https://dune.com/wint3rmute/TVL-acquisition-Retention-Churn
-gvt query       https://dune.com/queries/526761
-pwrd query      https://dune.com/queries/526761
+query gvt       https://dune.com/queries/527186
+query pwrd      https://dune.com/queries/526761
+query totals    https://dune.com/queries/502880
