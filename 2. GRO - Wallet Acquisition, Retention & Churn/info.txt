@@ -1,0 +1,3 @@
+dashboard       https://dune.com/wint3rmute/GRO-Wallet-Acquisition-Retention-and-Churn
+gvt query       https://dune.com/queries/533692
+pwrd query      https://dune.com/queries/533422
