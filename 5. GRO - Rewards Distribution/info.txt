@@ -1,0 +1,11 @@
+# version 1
+dashboard       https://dune.com/wint3rmute/gro-rewards-distribution-spark
+query totals    https://dune.com/queries/1748136
+query staker    https://dune.com/queries/1747992
+query airdrop   https://dune.com/queries/1747924
+
+# version 2
+dashboard       https://dune.com/wint3rmute/gro-rewards-distribution-g2
+query totals    https://dune.com/queries/2258855
+query staker    https://dune.com/queries/2258822
+query airdrop   https://dune.com/queries/2258839
