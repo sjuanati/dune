@@ -1,82 +1,102 @@
 /*
-/// @title  GRO - TVL v3
+/// @title  GRO - TVL v4 [Engine V2 - Dune SQL]
 /// @kpi    - Total TVL of GVT & PWRD
 /// @dev    - PWRD: USD amounts based on deposit & withdrawal handler events, therefore excluding returns & rebasing (pwrd)
 /// @dev    - GVT: USD amounts based on transfer amount * price deduced from PNL events
 */
 
 WITH
-    -- Deposits & withdrawals (incl. all three versions of handlers)
+    -- Deposits & withdrawals (incl. all three versions of deposit/withdrawal handlers + GRouter for G2)
     pwrd AS (
-        SELECT date_trunc('week', evt_block_time) AS "week",
-               "usdAmount" / 1e18 AS "amount",
-               'deposit' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."DepositHandler_evt_LogNewDeposit"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(usdAmount AS DOUBLE) / 1e18 AS amount,
+               'deposit' AS side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.DepositHandler_evt_LogNewDeposit
         UNION ALL
-        SELECT date_trunc('week', evt_block_time)::date AS "week",
-               "returnUsd" / 1e18 AS "amount",
-               'withdrawal' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."WithdrawHandler_evt_LogNewWithdrawal"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(returnUsd AS DOUBLE) / 1e18 AS amount,
+               'withdrawal' AS  side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.WithdrawHandler_evt_LogNewWithdrawal
          UNION ALL
-        SELECT date_trunc('week', evt_block_time) AS "week",
-               "usdAmount" / 1e18 AS "amount",
-               'deposit' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."DepositHandlerPrev1_evt_LogNewDeposit"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(usdAmount AS DOUBLE) / 1e18 AS amount,
+               'deposit' AS side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.DepositHandlerPrev1_evt_LogNewDeposit
         UNION ALL
-        SELECT date_trunc('week', evt_block_time)::date AS "week",
-               "returnUsd" / 1e18 AS "amount",
-               'withdrawal' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."WithdrawHandlerPrev1_evt_LogNewWithdrawal"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(returnUsd AS DOUBLE) / 1e18 AS amount,
+               'withdrawal' AS side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.WithdrawHandlerPrev1_evt_LogNewWithdrawal
          UNION ALL
-        SELECT date_trunc('week', evt_block_time) AS "week",
-               "usdAmount" / 1e18 AS "amount",
-               'deposit' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."DepositHandlerPrev2_evt_LogNewDeposit"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(usdAmount AS DOUBLE) / 1e18 AS amount,
+               'deposit' AS side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.DepositHandlerPrev2_evt_LogNewDeposit
         UNION ALL
-        SELECT date_trunc('week', evt_block_time)::date AS "week",
-               "returnUsd" / 1e18 AS "amount",
-               'withdrawal' AS "type",
-               "user" AS "wallet",
-               "pwrd" AS "pwrd"
-          FROM gro."WithdrawHandlerPrev2_evt_LogNewWithdrawal"
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(returnUsd AS DOUBLE) / 1e18 AS amount,
+               'withdrawal' AS side,
+               "user" AS wallet,
+               "pwrd" AS pwrd
+          FROM gro_ethereum.WithdrawHandlerPrev2_evt_LogNewWithdrawal
+         UNION ALL
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(calcAmount AS DOUBLE) / 1e18 AS amount,
+               'deposit' AS side,
+               "sender" AS wallet,
+               "tranche" AS pwrd
+          FROM gro_ethereum.GRouter_evt_LogDeposit
+         UNION ALL
+        SELECT date_trunc('week', evt_block_time) AS week,
+               CAST(calcAmount AS DOUBLE) / 1e18 AS amount,
+               'withdrawal' AS side,
+               "sender" AS wallet,
+               "tranche" AS pwrd
+          FROM gro_ethereum.GRouter_evt_LogWithdrawal
     ),
     -- Total GVT supply based on ERC20 transfers
     gvt_total_supply AS (
         SELECT
             SUM(
                 CASE
-                    WHEN "from" = '\x0000000000000000000000000000000000000000' THEN value
-                    WHEN "to" = '\x0000000000000000000000000000000000000000' THEN -value
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN CAST(value AS DOUBLE)
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN - CAST(value AS DOUBLE)
                 END
-            ) / 1e18 AS "total_supply"
-        FROM erc20."ERC20_evt_Transfer" tr
-        WHERE contract_address = '\x3ADb04E127b9C0a5D36094125669d4603AC52a0c'
+            ) / 1e18 AS total_supply
+        FROM erc20_ethereum.evt_Transfer tr
+        WHERE contract_address = 0x3ADb04E127b9C0a5D36094125669d4603AC52a0c
     ),
     -- Total GVT assets based on PnL events
     gvt_total_assets AS (
-        SELECT pnl."afterGvtAssets" / 1e18 as "gvt_assets"
-        FROM gro."PnL_evt_LogPnLExecution" pnl
+        SELECT CAST(balances[1] AS DOUBLE) / 1e18 as gvt_assets
+        FROM gro_ethereum.GTranche_evt_LogNewTrancheBalance
         ORDER BY evt_block_number DESC
         LIMIT 1
     ),
     -- PWRD TVL
     pwrd_tvl AS (
-        SELECT SUM(CASE WHEN pwrd = true THEN CASE WHEN type = 'deposit' THEN amount ELSE -amount END ELSE 0 END) AS "pwrd_tvl"
+        SELECT SUM(
+            CASE WHEN pwrd = true THEN 
+                 CASE WHEN side = 'deposit' THEN amount 
+                      ELSE -amount 
+                 END 
+            ELSE 0 END
+            ) AS pwrd_tvl
         FROM pwrd
     ),
     -- GVT TVL
     gvt_tvl AS (
-        SELECT total_supply * (gvt_assets / total_supply) as "gvt_tvl"
+        SELECT total_supply * (gvt_assets / total_supply) AS gvt_tvl
         FROM gvt_total_supply,
              gvt_total_assets
     )
