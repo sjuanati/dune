@@ -1,0 +1,9 @@
+# version 1
+dashboard:          https://dune.com/wint3rmute/gro-vesting-g2
+queries:
+- totals            https://dune.com/queries/2600715
+- rewards totals    https://dune.com/queries/2511109
+- rewards           https://dune.com/queries/2538515
+- team              https://dune.com/queries/2513704
+- investors         https://dune.com/queries/2513706
+- checksum          https://dune.com/queries/2516103
