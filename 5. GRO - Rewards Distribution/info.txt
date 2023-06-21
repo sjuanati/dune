@@ -9,3 +9,13 @@ dashboard       https://dune.com/wint3rmute/gro-rewards-distribution-g2
 query totals    https://dune.com/queries/2258855
 query staker    https://dune.com/queries/2258822
 query airdrop   https://dune.com/queries/2258839
+
+# version 3
+dashboard       https://dune.com/wint3rmute/gro-rewards-distribution-g2
+alloc points    https://dune.com/queries/2651889
+bonus pool      https://dune.com/queries/2650468
+rewards airdrop https://dune.com/queries/2258839
+rewards totals  https://dune.com/queries/2258855
+staker by lps   https://dune.com/queries/2649728
+staker emiss    https://dune.com/queries/2258822
+staker hist     https://dune.com/queries/2653294
