@@ -1,0 +1,11 @@
+# prev. version
+dashboard:              https://dune.com/wint3rmute/GRO-Wallet-Acquisition-Retention-and-Churn
+- gvt                   https://dune.com/queries/533692
+- pwrd                  https://dune.com/queries/533422
+
+# version 4
+dashboard:              https://dune.com/wint3rmute/gro-wallet-acquisition-retention-churn-g2
+- gvt                   https://dune.com/queries/2255954
+- gvt hodlers           https://dune.com/queries/2255884
+- pwrd                  https://dune.com/queries/2256040
+- pwrd hodlers          https://dune.com/queries/2255942

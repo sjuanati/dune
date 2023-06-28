@@ -1,0 +1,17 @@
+# version 2
+dashboard:              https://dune.com/wint3rmute/TVL-acquisition-Retention-Churn
+- gvt                   https://dune.com/queries/527186
+- pwrd                  https://dune.com/queries/526761
+- totals                https://dune.com/queries/502880
+
+# version 3
+dashboard:              https://dune.com/wint3rmute/gro-tvl-acquisition-retention-churn-v2
+- gvt                   https://dune.com/queries/1127170
+- pwrd                  https://dune.com/queries/526761
+- totals                https://dune.com/queries/1127183
+
+# version 4
+dashboard:              https://dune.com/wint3rmute/gro-tvl-acquisition-retention-churn-g2
+- gvt                   https://dune.com/queries/2252883
+- pwrd                  https://dune.com/queries/2255601
+- totals                https://dune.com/queries/2249147

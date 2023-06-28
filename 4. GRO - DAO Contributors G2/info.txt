@@ -1,3 +1,0 @@
-dashboard       https://dune.com/wint3rmute/gro-dao-contributors-g2
-team            https://dune.com/queries/2256358
-investors       https://dune.com/queries/2256447
