@@ -1,0 +1,4 @@
+# version 1
+dashboard:              https://dune.com/wint3rmute/gro-dao-voters
+queries:
+- snapshots             https://dune.com/queries/2517187
