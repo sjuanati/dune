@@ -213,16 +213,16 @@ WITH
         FROM investor_vesting
     ),
     gro_price AS (
-        SELECT "median_price" AS "median_price"
-        FROM dex.prices
-        WHERE "contract_address" = 0x3Ec8798B81485A254928B70CDA1cf0A2BB0B74D7
-        ORDER BY "hour" DESC
+        SELECT (CAST(reserve1 AS DOUBLE) / 1e6) / (CAST(reserve0 AS DOUBLE) / 1e18) as "gro_price"
+        FROM  uniswap_v2_ethereum.Pair_evt_Sync
+        WHERE contract_address = 0x21c5918ccb42d20a2368bdca8feda0399ebfd2f6
+        ORDER BY evt_block_number DESC
         LIMIT 1
     ),
     totals AS (
         SELECT
             r."vesting" + t."vesting" + i."vesting" AS "total_vesting_gro",
-            (r."vesting" + t."vesting" + i."vesting") * price."median_price" AS "total_vesting_usd"
+            (r."vesting" + t."vesting" + i."vesting") * price."gro_price" AS "total_vesting_usd"
         FROM rewards_vesting_totals r
         CROSS JOIN team_vesting_totals t
         CROSS JOIN investor_vesting_totals i
@@ -234,7 +234,7 @@ SELECT
     r."total" AS "total gro",
     r."vested" AS "vested gro",
     r."vesting" AS "vesting gro",
-    r."vesting" * p."median_price" AS "vesting usd",
+    r."vesting" * p."gro_price" AS "vesting usd",
     t."total_vesting_gro" AS "total_vesting_gro",
     t."total_vesting_usd" AS "total_vesting_usd"
 FROM rewards_vesting_totals r
@@ -246,7 +246,7 @@ SELECT
     i."total" AS "total gro",
     i."vested" AS "vested gro",
     i."vesting" AS "vesting gro",
-    i."vesting" * p."median_price" AS "vesting usd",
+    i."vesting" * p."gro_price" AS "vesting usd",
     t."total_vesting_gro" AS "total_vesting_gro",
     t."total_vesting_usd" AS "total_vesting_usd"
 FROM investor_vesting_totals i
@@ -258,7 +258,7 @@ SELECT
     t."total" AS "total gro",
     t."vested" AS "vested gro",
     t."vesting" AS "vesting gro",
-    t."vesting" * p."median_price" AS "vesting usd",
+    t."vesting" * p."gro_price" AS "vesting usd",
     tt."total_vesting_gro" AS "total_vesting_gro",
     tt."total_vesting_usd" AS "total_vesting_usd"
 FROM team_vesting_totals t
