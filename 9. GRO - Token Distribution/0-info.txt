@@ -1,0 +1,3 @@
+# version 1
+dashboard:              https://dune.com/wint3rmute/gro-token-distribution-g2
+- token distribution    https://dune.com/queries/2819328
