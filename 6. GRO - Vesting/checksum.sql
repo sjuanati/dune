@@ -44,7 +44,8 @@ WITH
             (0x106e7eca4a0dac78eadfab1fea20336290694139, 1, 1647259200),
             (0x08d0b7efd89319c2baddab8dd5ba8c7952aedcd4, 0, 1649635200),
             (0x04106fdd34485c03794f112e1c71ec6706bbb506, 2, 1661990400),
-            (0x04106fdd34485c03794f112e1c71ec6706bbb506, 0, 1641038400)
+            (0x04106fdd34485c03794f112e1c71ec6706bbb506, 0, 1641038400),
+            (0x95c1d2014909c04202fa73820b894b45f054f25e, 0, 1680498000)
         ) AS t("contributor", "id", "start_date")
     ),
     team_vests AS (
