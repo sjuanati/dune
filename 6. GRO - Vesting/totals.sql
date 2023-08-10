@@ -223,7 +223,8 @@ WITH
     totals AS (
         SELECT
             r."vesting" + t."vesting" + i."vesting" AS "total_vesting_gro",
-            (r."vesting" + t."vesting" + i."vesting") * price."gro_price" AS "total_vesting_usd"
+            (r."vesting" + t."vesting" + i."vesting") * price."gro_price" AS "total_vesting_usd",
+            price."gro_price" AS "gro_price"
         FROM rewards_vesting_totals r
         CROSS JOIN team_vesting_totals t
         CROSS JOIN investor_vesting_totals i
@@ -237,7 +238,8 @@ SELECT
     r."vesting" AS "vesting gro",
     r."vesting" * p."gro_price" AS "vesting usd",
     t."total_vesting_gro" AS "total_vesting_gro",
-    t."total_vesting_usd" AS "total_vesting_usd"
+    t."total_vesting_usd" AS "total_vesting_usd",
+    t."gro_price" AS "gro price"
 FROM rewards_vesting_totals r
 CROSS JOIN gro_price p
 CROSS JOIN totals t
@@ -249,7 +251,8 @@ SELECT
     i."vesting" AS "vesting gro",
     i."vesting" * p."gro_price" AS "vesting usd",
     t."total_vesting_gro" AS "total_vesting_gro",
-    t."total_vesting_usd" AS "total_vesting_usd"
+    t."total_vesting_usd" AS "total_vesting_usd",
+    t."gro_price" AS "gro price"
 FROM investor_vesting_totals i
 CROSS JOIN gro_price p
 CROSS JOIN totals t
@@ -261,7 +264,8 @@ SELECT
     t."vesting" AS "vesting gro",
     t."vesting" * p."gro_price" AS "vesting usd",
     tt."total_vesting_gro" AS "total_vesting_gro",
-    tt."total_vesting_usd" AS "total_vesting_usd"
+    tt."total_vesting_usd" AS "total_vesting_usd",
+    tt."gro_price" AS "gro price"
 FROM team_vesting_totals t
 CROSS JOIN gro_price p
 CROSS JOIN totals tt
