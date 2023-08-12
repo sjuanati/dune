@@ -1,7 +1,37 @@
 /*
-/// @title GRO Token Distribution
-/// @db_engine: v2 Dune SQL
-/// @purpose TBD
+/// @title    GRO Token Distribution
+/// @purpose  Understand the total GRO that could potentially be used towards governance
+/// @engine   v2 Dune SQL
+/// @Version  1.0
+/// @kpi    - quota: GRO token allocation according to GRO Tokenomics
+///         - total: liquid + vesting + vested GRO
+///         - liquid: minted GRO in circulation
+///         - vesting/ed: vesting + vested GRO
+///         - vesting: locked GRO in GROVesting, GROTeamVesting & GROInvVesting contracts
+///         - vested: unlocked GRO from above contracts excluding claims
+///         - gro price: current dollar value of GRO based on Uniswap GRO/USDC pool
+/// @dev    - Vested GRO for community deducts claims via LogExit, whereas vested GRO for team &
+///           investors deducts claims via LogClaimed. LogInstantExit is excluded, as it represents
+///           staking claims that can be vested or 30% claimed (but weren't vesting)
+///         - Treasury is calculated as the liquid GRO in wallet 0x..fe0d plus the GRO amount from
+///           its position in Uniswap pool GRO/USDC. If further GRO is moved to any DeFi protocol,
+///           the GRO position should be added in the Dashboard
+///         - startDate for team & investor contracts is not emmited through any event, so it must be
+///           manually added in the Dashboard queries when a new vesting position is created. To check
+///           for new positions, refer to Checksum table in https://dune.com/wint3rmute/gro-vesting-g2
+/// @checks   data validation for vesting/ed can't be done gobally, but per user basis:
+///           - vesting/ed = GROTeamVesting.positionBalance()
+///           - vested = GROTeamVesting.positionVestedBalance()
+///           - vesting = no function() in contract, but the diff between vesting/ed - vested
+///           (same for investors)
+/// @contracts
+///         - GROVesting: 0xA28693bf01Dc261887b238646Bb9636cB3a3730B
+///         - GROVestingV2: 0x748218256AfE0A19a88EBEB2E0C5Ce86d2178360
+///         - GROTeamVesting: 0xF43c6bDD2F9158B5A78DCcf732D190C490e28644
+///         - GROInvVesting: 0x0537d3DA1Ed1dd7350fF1f3B92b727dfdBAB80f1
+///         - GROToken: 0x3Ec8798B81485A254928B70CDA1cf0A2BB0B74D7
+///         - UniswapV2.Pair: 0x21C5918CcB42d20A2368bdCA8feDA0399EbfD2f6
+///         - Treasury wallet: 0x359f4fe841f246a095a82cb26f5819e10a91fe0d
 */
 
 WITH
@@ -105,7 +135,8 @@ WITH
         (0x106e7eca4a0dac78eadfab1fea20336290694139, 1, 1647259200),
         (0x08d0b7efd89319c2baddab8dd5ba8c7952aedcd4, 0, 1649635200),
         (0x04106fdd34485c03794f112e1c71ec6706bbb506, 2, 1661990400),
-        (0x04106fdd34485c03794f112e1c71ec6706bbb506, 0, 1641038400)
+        (0x04106fdd34485c03794f112e1c71ec6706bbb506, 0, 1641038400),
+        (0x95c1d2014909c04202fa73820b894b45f054f25e, 0, 1680498000)
       ) AS t("contributor", "id", "start_date")
     ),
     team_vests AS (
@@ -228,7 +259,7 @@ WITH
             ) / 1e18 AS total_amount
         FROM gro_ethereum.GROToken_evt_Transfer
     ),
-    treasury_uni_gro_usdc_stats AS (
+    uni_gro_usdc_amount AS (
         SELECT
             SUM(
                 CASE 
@@ -239,7 +270,7 @@ WITH
                         AND "to" = 0x21c5918ccb42d20a2368bdca8feda0399ebfd2f6
                     THEN -CAST("value" AS DOUBLE) / 1e18 
                     ELSE 0 
-                END) as position_amount,
+                END) as treasury_position,
             SUM(
                 CASE 
                     WHEN "from" = 0x0000000000000000000000000000000000000000 
@@ -251,7 +282,7 @@ WITH
         FROM  uniswap_v2_ethereum.Pair_evt_Transfer
         WHERE "contract_address" = 0x21c5918ccb42d20a2368bdca8feda0399ebfd2f6
     ),
-   treasury_uni_gro_usdc_last_gro_reserve AS (
+   uni_gro_udsc_reserve AS (
         SELECT
             CAST("reserve0" AS DOUBLE) / 1e18 as "amount",
             (CAST("reserve1" AS DOUBLE) / 1e6) / (CAST("reserve0" AS DOUBLE) / 1e18) as "gro_price"
@@ -260,14 +291,14 @@ WITH
         ORDER BY "evt_block_number" DESC
         LIMIT 1
     ),
-    treasury_uni_gro_usdc_total AS (
-        SELECT (lp."position_amount" / lp."supply_amount") * reserve."amount" AS "amount"
-        FROM treasury_uni_gro_usdc_stats lp,
-             treasury_uni_gro_usdc_last_gro_reserve reserve
+    uni_gro_usdc_total AS (
+        SELECT (lp."treasury_position" / lp."supply_amount") * reserve."amount" AS "amount"
+        FROM uni_gro_usdc_amount lp,
+             uni_gro_udsc_reserve reserve
     ),
     treasury_totals AS (
         SELECT liq."treasury_amount" + lp."amount" AS "amount"
-        FROM gro_liquid liq, treasury_uni_gro_usdc_total lp
+        FROM gro_liquid liq, uni_gro_usdc_total lp
     ),
     team_claimed AS (
         SELECT SUM("amount") / 1e18 AS "amount"
@@ -302,7 +333,7 @@ WITH
             lp."gro_price" AS "gro_price"
         FROM rewards_vesting_totals r,
              community_total liq,
-             treasury_uni_gro_usdc_last_gro_reserve lp
+             uni_gro_udsc_reserve lp
         UNION ALL
         -- Investors
         SELECT
@@ -324,7 +355,7 @@ WITH
             lp."gro_price" AS "gro_price"
         FROM investor_vesting_totals i,
              investors_claimed liq,
-             treasury_uni_gro_usdc_last_gro_reserve lp
+             uni_gro_udsc_reserve lp
         UNION ALL
         -- Team
         SELECT
@@ -346,7 +377,7 @@ WITH
             lp."gro_price" AS "gro_price"
         FROM team_vesting_totals t,
              team_claimed liq,
-             treasury_uni_gro_usdc_last_gro_reserve lp
+             uni_gro_udsc_reserve lp
         UNION ALL
         -- Treasury
         SELECT
@@ -367,7 +398,7 @@ WITH
             0 AS "vested %",
             lp."gro_price" AS "gro_price"
         FROM treasury_totals t,
-             treasury_uni_gro_usdc_last_gro_reserve lp
+             uni_gro_udsc_reserve lp
         ORDER BY 2 DESC
     ),
     grand_total AS (
@@ -389,7 +420,7 @@ WITH
             SUM("vested %") AS "vested %",
             lp."gro_price" AS "gro_price"
         FROM totals,
-             treasury_uni_gro_usdc_last_gro_reserve lp
+             uni_gro_udsc_reserve lp
         GROUP BY lp.gro_price
     )
 
