@@ -5,7 +5,9 @@
 */
 
 WITH
-    -- GROVesting
+    /***********************************************************************************************
+    ****************************** C O M M U N I T Y  -  GROVesting ********************************
+    ***********************************************************************************************/
     vests AS (
         SELECT
             "user" AS "user",
@@ -74,7 +76,9 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM vesting_gro
     ),
-    -- GROTeamVesting
+    /***********************************************************************************************
+    ********************************* T E A M  -  GROTeamVesting ***********************************
+    ***********************************************************************************************/
     team_start_date AS (
       SELECT * 
       FROM (VALUES 
@@ -110,15 +114,19 @@ WITH
       ) AS t("contributor", "id", "start_date")
     ),
     team_vests AS (
-        SELECT CAST(vest."id" AS INTEGER) as "id",
-               vest."contributor" as "contributor",
-               CAST(vest."amount" AS DOUBLE) / 1e18 as "amount"
+        SELECT 
+            CAST(vest."id" AS INTEGER) as "id",
+            vest."contributor" as "contributor",
+            CASE
+                WHEN stop_vest."contributor" IS NULL
+                    THEN CAST(vest."amount" AS DOUBLE) / 1e18
+                    ELSE CAST(stop_vest."unlocked" AS DOUBLE) / 1e18
+                END
+            AS "amount"
         FROM gro_ethereum.GROTeamVesting_evt_LogNewVest vest
-            LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
-                 ON vest."contributor" = stop_vest."contributor"
-                 AND vest."id" = stop_vest."id"
-        WHERE stop_vest."contributor" IS NULL
-        AND stop_vest."id" IS NULL
+        LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
+            ON vest."contributor" = stop_vest."contributor"
+            AND vest."id" = stop_vest."id"
     ),
     team_vesting as (
          SELECT tv."contributor" as "contributor",
@@ -153,7 +161,29 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM team_vesting
     ),
--- GROInvVesting
+    -- total GRO unlocked based on => (QUOTA) * (block.timestamp - VESTING_START_TIME) / (VESTING_TIME)
+    team_unlocked AS (
+        SELECT (22509423 * ( (FLOOR(TO_UNIXTIME("time"))) - 1632844800) / 94670856) AS "amount"
+        FROM ethereum.blocks ORDER BY "number" DESC LIMIT 1
+    ),
+    -- GRO directly withdrawn by contract owner (GRO vested not assigned to any wallet)
+    team_withdrawn AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROTeamVesting_evt_LogWithdrawal
+    ),
+    -- GRO available (vested) not assigned to any wallet nor withdrawn yet
+    team_available AS (
+        SELECT u.amount - (v.total + w.amount) AS "amount"
+        FROM team_vesting_totals v, team_withdrawn w, team_unlocked u
+    ),
+    -- GRO claimed (withdrawn by team member)
+    team_claimed AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROTeamVesting_evt_LogClaimed
+    ),
+    /***********************************************************************************************
+    **************************** I N V E S T O R S  -  GROInvVesting *******************************
+    ***********************************************************************************************/
     investor_start_date AS (
     SELECT * FROM (VALUES 
         (0xf7d74a3e2295a860cdd88b901940b367737e8a8f, 1632844845),
@@ -259,8 +289,8 @@ CROSS JOIN totals t
 UNION ALL
 SELECT
     'Team' AS "type", 
-    t."total" AS "total gro",
-    t."vested" AS "vested gro",
+    t."total" - c."amount" + a."amount" AS "total gro",
+    t."vested" - c."amount" + a."amount" AS "vested gro",
     t."vesting" AS "vesting gro",
     t."vesting" * p."gro_price" AS "vesting usd",
     tt."total_vesting_gro" AS "total_vesting_gro",
@@ -269,4 +299,6 @@ SELECT
 FROM team_vesting_totals t
 CROSS JOIN gro_price p
 CROSS JOIN totals tt
+CROSS JOIN team_available a
+CROSS JOIN team_claimed c
 ORDER BY 2 DESC

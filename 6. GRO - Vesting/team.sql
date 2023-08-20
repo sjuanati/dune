@@ -44,15 +44,19 @@ WITH
       ) AS t("contributor", "id", "start_date")
     ),
     team_vests AS (
-        SELECT CAST(vest."id" AS INTEGER) as "id",
-               vest."contributor" as "contributor",
-               CAST(vest."amount" AS DOUBLE) / 1e18 as "amount"
+        SELECT 
+            CAST(vest."id" AS INTEGER) as "id",
+            vest."contributor" as "contributor",
+            CASE
+                WHEN stop_vest."contributor" IS NOT NULL
+                    THEN CAST(stop_vest."unlocked" AS DOUBLE) / 1e18
+                    ELSE CAST(vest."amount" AS DOUBLE) / 1e18
+                END
+            AS "amount"
         FROM gro_ethereum.GROTeamVesting_evt_LogNewVest vest
-            LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
-                 ON vest."contributor" = stop_vest."contributor"
-                 AND vest."id" = stop_vest."id"
-        WHERE stop_vest."contributor" IS NULL
-        AND stop_vest."id" IS NULL
+        LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
+            ON vest."contributor" = stop_vest."contributor"
+            AND vest."id" = stop_vest."id"
     ),
     team_vesting as (
          SELECT tv."contributor" as "contributor",
@@ -89,6 +93,44 @@ WITH
             SUM("vested") AS "vested"
         FROM team_vesting
         GROUP BY 1,2,3
+    ),
+    -- total GRO unlocked based on => (QUOTA) * (block.timestamp - VESTING_START_TIME) / (VESTING_TIME)
+    team_unlocked AS (
+        SELECT (22509423 * ( (FLOOR(TO_UNIXTIME("time"))) - 1632844800) / 94670856) AS "amount"
+        FROM ethereum.blocks ORDER BY "number" DESC LIMIT 1
+    ),
+    -- GRO directly withdrawn by contract owner (GRO vested not assigned to any wallet)
+    team_withdrawn AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROTeamVesting_evt_LogWithdrawal
+    ),
+    team_vesting_agg AS (
+        SELECT SUM("total_amount") AS "total" FROM team_vesting
+    ),
+    -- GRO available (vested) not assigned to any wallet nor withdrawn yet
+    team_available AS (
+        SELECT u.amount - (v.total + w.amount) AS "amount"
+        FROM team_vesting_agg v, team_withdrawn w, team_unlocked u
+    ),
+    team_contract_owner AS (
+        SELECT "newOwner" AS "owner"
+        FROM gro_ethereum.GROTeamVesting_evt_OwnershipTransferred
+        ORDER BY evt_block_number DESC
+        LIMIT 1
+    ),
+    team_owner_totals AS (
+        SELECT
+            o."owner" AS "contributor",
+            -1 AS "position",
+            null AS "startTS",
+            null AS "startDate",
+            a."amount" AS "total",
+            0 AS "vesting",
+            a."amount" AS "vested"
+        FROM team_contract_owner o, team_available a
     )
 
-SELECT * FROM team_vesting_totals ORDER BY "total" DESC;
+SELECT * FROM team_vesting_totals
+UNION ALL
+SELECT * FROM team_owner_totals
+ORDER BY "total" DESC;
