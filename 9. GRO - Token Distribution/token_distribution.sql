@@ -35,7 +35,9 @@
 */
 
 WITH
-    -- GROVesting
+    /***********************************************************************************************
+    ****************************** C O M M U N I T Y  -  GROVesting ********************************
+    ***********************************************************************************************/
     vests AS (
         SELECT
             "user" AS "user",
@@ -104,7 +106,9 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM vesting_gro
     ),
-    -- GROTeamVesting
+    /***********************************************************************************************
+    ********************************* T E A M  -  GROTeamVesting ***********************************
+    ***********************************************************************************************/
     team_start_date AS (
       SELECT * 
       FROM (VALUES 
@@ -140,15 +144,19 @@ WITH
       ) AS t("contributor", "id", "start_date")
     ),
     team_vests AS (
-        SELECT CAST(vest."id" AS INTEGER) as "id",
-               vest."contributor" as "contributor",
-               CAST(vest."amount" AS DOUBLE) / 1e18 as "amount"
+        SELECT 
+            CAST(vest."id" AS INTEGER) as "id",
+            vest."contributor" as "contributor",
+            CASE
+                WHEN stop_vest."contributor" IS NULL
+                    THEN CAST(vest."amount" AS DOUBLE) / 1e18
+                    ELSE CAST(stop_vest."unlocked" AS DOUBLE) / 1e18
+                END
+            AS "amount"
         FROM gro_ethereum.GROTeamVesting_evt_LogNewVest vest
-            LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
-                 ON vest."contributor" = stop_vest."contributor"
-                 AND vest."id" = stop_vest."id"
-        WHERE stop_vest."contributor" IS NULL
-        AND stop_vest."id" IS NULL
+        LEFT JOIN gro_ethereum.GROTeamVesting_evt_LogStoppedVesting stop_vest
+            ON vest."contributor" = stop_vest."contributor"
+            AND vest."id" = stop_vest."id"
     ),
     team_vesting as (
          SELECT tv."contributor" as "contributor",
@@ -183,7 +191,29 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM team_vesting
     ),
--- GROInvVesting
+    -- total GRO unlocked based on => (QUOTA) * (block.timestamp - VESTING_START_TIME) / (VESTING_TIME)
+    team_unlocked AS (
+        SELECT (22509423 * ( (FLOOR(TO_UNIXTIME("time"))) - 1632844800) / 94670856) AS "amount"
+        FROM ethereum.blocks ORDER BY "number" DESC LIMIT 1
+    ),
+    -- GRO directly withdrawn by contract owner (GRO vested not assigned to any wallet)
+    team_withdrawn AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROTeamVesting_evt_LogWithdrawal
+    ),
+    -- GRO available (vested) not assigned to any wallet nor withdrawn yet
+    team_available AS (
+        SELECT u.amount - (v.total + w.amount) AS "amount"
+        FROM team_vesting_totals v, team_withdrawn w, team_unlocked u
+    ),
+    -- GRO claimed (withdrawn by team member)
+    team_claimed AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROTeamVesting_evt_LogClaimed
+    ),
+    /***********************************************************************************************
+    **************************** I N V E S T O R S  -  GROInvVesting *******************************
+    ***********************************************************************************************/
     investor_start_date AS (
     SELECT * FROM (VALUES 
         (0xf7d74a3e2295a860cdd88b901940b367737e8a8f, 1632844845),
@@ -243,6 +273,13 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM investor_vesting
     ),
+    investor_claimed AS (
+        SELECT SUM("amount") / 1e18 AS "amount"
+        FROM gro_ethereum.GROInvVesting_evt_LogClaimed
+    ),
+    /***********************************************************************************************
+    ************************************** T R E A S U R Y *****************************************
+    ***********************************************************************************************/
     gro_liquid AS (
         SELECT              
             SUM(
@@ -300,34 +337,25 @@ WITH
         SELECT liq."treasury_amount" + lp."amount" AS "amount"
         FROM gro_liquid liq, uni_gro_usdc_total lp
     ),
-    team_claimed AS (
-        SELECT SUM("amount") / 1e18 AS "amount"
-        FROM gro_ethereum.GROTeamVesting_evt_LogClaimed
-    ),
-    team_withdrawn AS (
-        SELECT SUM("amount") / 1e18 AS "amount"
-        FROM gro_ethereum.GROTeamVesting_evt_LogWithdrawal
-    ),
-    investors_claimed AS (
-        SELECT SUM("amount") / 1e18 AS "amount"
-        FROM gro_ethereum.GROInvVesting_evt_LogClaimed
-    ),
     community_total AS (
-        SELECT total."total_amount" - treasury."amount" - team."amount" - inv."amount" AS "amount"
-        FROM gro_liquid total, treasury_totals treasury, team_claimed team, investors_claimed inv
+        SELECT total."total_amount" - treasury."amount" - team_c."amount" - team_w."amount" - inv_c."amount" AS "amount"
+        FROM gro_liquid total, treasury_totals treasury, team_claimed team_c, team_withdrawn team_w, investor_claimed inv_c
     ),
+    /***********************************************************************************************
+    **************************************** T O T A L S *******************************************
+    ***********************************************************************************************/
     totals AS (
     -- Community
         SELECT 
             'Community' AS "type",
             45000000 AS "quota",
-            CAST(45000000 AS DOUBLE) / CAST(100000000 AS DOUBLE) AS "quota %",
-            r."total" + liq."amount" - liq_w."amount" AS "total",
-            (r."total" + liq."amount" - liq_w."amount") /  CAST(100000000 AS DOUBLE) AS "total %",
-            (r."total" + liq."amount" - liq_w."amount") * lp."gro_price" AS "total $",
-            liq."amount" - liq_w."amount" AS "liquid",
-            (liq."amount" - liq_w."amount") * lp."gro_price" AS "liquid $",
-            (liq."amount" - liq_w."amount") /  CAST(100000000 AS DOUBLE) AS "liquid %",
+            45000000 / CAST(100000000 AS DOUBLE) AS "quota %",
+            r."total" + liq."amount" AS "total",
+            (r."total" + liq."amount") /  CAST(100000000 AS DOUBLE) AS "total %",
+            (r."total" + liq."amount") * lp."gro_price" AS "total $",
+            liq."amount" AS "liquid",
+            liq."amount" * lp."gro_price" AS "liquid $",
+            liq."amount" /  CAST(100000000 AS DOUBLE) AS "liquid %",
             r."total" AS "vesting/ed",
             r."total" / CAST(100000000 AS DOUBLE) AS "vesting/ed %",
             r."vesting" AS "vesting",
@@ -337,14 +365,13 @@ WITH
             lp."gro_price" AS "gro_price"
         FROM rewards_vesting_totals r,
              community_total liq,
-             team_withdrawn liq_w,
              uni_gro_udsc_reserve lp
         UNION ALL
         -- Investors
         SELECT
             'Investors' AS "type",
             19490577 AS "quota",
-            CAST(19490577 AS DOUBLE) / CAST(100000000 AS DOUBLE) AS "quota %",
+            19490577 / CAST(100000000 AS DOUBLE) AS "quota %",
             i."total" AS "total",
             i."total" /  CAST(100000000 AS DOUBLE) AS "total %",
             i."total" * lp."gro_price" AS "total $",
@@ -359,37 +386,38 @@ WITH
             (i."vested" - liq."amount") / CAST(100000000 AS DOUBLE) AS "vested %",
             lp."gro_price" AS "gro_price"
         FROM investor_vesting_totals i,
-             investors_claimed liq,
+             investor_claimed liq,
              uni_gro_udsc_reserve lp
         UNION ALL
         -- Team
         SELECT
             'Team' AS "type",
             22509423 AS "quota",
-            CAST(22509423 AS DOUBLE) / CAST(100000000 AS DOUBLE) AS "quota %",
-            t."total" + liq_w."amount" AS "total",
-            (t."total" + liq_w."amount") /  CAST(100000000 AS DOUBLE) AS "total %",
-            (t."total" + liq_w."amount")  * lp."gro_price" AS "total $",
+            22509423 / CAST(100000000 AS DOUBLE) AS "quota %",
+            t."total" + liq_w."amount" + a."amount" AS "total",
+            (t."total" + liq_w."amount" + a."amount") /  CAST(100000000 AS DOUBLE) AS "total %",
+            (t."total" + liq_w."amount" +  a."amount")  * lp."gro_price" AS "total $",
             liq.amount + liq_w."amount" AS "liquid",
             (liq.amount + liq_w."amount") * lp."gro_price" AS "liquid $",
             (liq.amount + liq_w."amount") /  CAST(100000000 AS DOUBLE) AS "liquid %",
-            (t."total" - liq."amount") AS "vesting/ed",
-            (t."total" - liq."amount") / CAST(100000000 AS DOUBLE) AS "vesting/ed %",
+            (t."total" +  a."amount" - liq."amount") AS "vesting/ed",
+            (t."total" +  a."amount" - liq."amount") / CAST(100000000 AS DOUBLE) AS "vesting/ed %",
             t."vesting" AS "vesting",
             t."vesting" / CAST(100000000 AS DOUBLE) AS "vesting %",
-            (t."vested" - liq."amount") AS "vested",
-            (t."vested" - liq."amount") / CAST(100000000 AS DOUBLE) AS "vested %",
+            (t."vested" + a."amount" - liq."amount") AS "vested",
+            (t."vested" + a."amount" - liq."amount") / CAST(100000000 AS DOUBLE) AS "vested %",
             lp."gro_price" AS "gro_price"
         FROM team_vesting_totals t,
              team_claimed liq,
              team_withdrawn liq_w,
+             team_available a,
              uni_gro_udsc_reserve lp
         UNION ALL
         -- Treasury
         SELECT
             'Treasury' AS "type",
             13000000 AS "quota",
-            CAST(13000000 AS DOUBLE) / CAST(100000000 AS DOUBLE) AS "quota %",
+            13000000 / CAST(100000000 AS DOUBLE) AS "quota %",
             t."amount" AS "total",
             t."amount" /  CAST(100000000 AS DOUBLE) AS "total %",
             t."amount" * lp."gro_price" AS "total $",
