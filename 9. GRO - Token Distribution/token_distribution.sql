@@ -2,7 +2,7 @@
 /// @title    GRO Token Distribution
 /// @purpose  Understand the total GRO that could potentially be used towards governance
 /// @engine   v2 Dune SQL
-/// @Version  1.0
+/// @Version  1.1
 /// @kpi    - quota: GRO token allocation according to GRO Tokenomics
 ///         - total: liquid + vesting + vested GRO
 ///         - liquid: minted GRO in circulation
@@ -13,9 +13,7 @@
 /// @dev    - Vested GRO for community deducts claims via LogExit, whereas vested GRO for team &
 ///           investors deducts claims via LogClaimed. LogInstantExit is excluded, as it represents
 ///           staking claims that can be vested or 30% claimed (but weren't vesting)
-///         - Treasury is calculated as the liquid GRO in wallet 0x..fe0d plus the GRO amount from
-///           its position in Uniswap pool GRO/USDC. If further GRO is moved to any DeFi protocol,
-///           the GRO position should be added in the Dashboard
+///         - Treasury is calculated as the minted GRO to wallet 0x..fe0d
 ///         - startDate for team & investor contracts is not emmited through any event, so it must be
 ///           manually added in the Dashboard queries when a new vesting position is created. To check
 ///           for new positions, refer to Checksum table in https://dune.com/wint3rmute/gro-vesting-g2
@@ -281,13 +279,14 @@ WITH
     ************************************** T R E A S U R Y *****************************************
     ***********************************************************************************************/
     gro_liquid AS (
-        SELECT              
+        SELECT
             SUM(
                 CASE
-                    WHEN "to" = 0x359F4fe841f246a095a82cb26F5819E10a91fe0d THEN CAST("value" AS DOUBLE)
-                    WHEN "from" = 0x359F4fe841f246a095a82cb26F5819E10a91fe0d THEN -CAST("value" AS DOUBLE)
+                    WHEN ("to" = 0x359F4fe841f246a095a82cb26F5819E10a91fe0d
+                     AND "from" = 0x0000000000000000000000000000000000000000) 
+                    THEN CAST("value" AS DOUBLE)
                 END
-            ) / 1e18 AS treasury_amount,
+            ) / 1e18 AS treasury_amount_minted,
             SUM(
                 CASE
                     WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -CAST("value" AS DOUBLE)
@@ -328,18 +327,9 @@ WITH
         ORDER BY "evt_block_number" DESC
         LIMIT 1
     ),
-    uni_gro_usdc_total AS (
-        SELECT (lp."treasury_position" / lp."supply_amount") * reserve."amount" AS "amount"
-        FROM uni_gro_usdc_amount lp,
-             uni_gro_udsc_reserve reserve
-    ),
-    treasury_totals AS (
-        SELECT liq."treasury_amount" + lp."amount" AS "amount"
-        FROM gro_liquid liq, uni_gro_usdc_total lp
-    ),
     community_total AS (
-        SELECT total."total_amount" - treasury."amount" - team_c."amount" - team_w."amount" - inv_c."amount" AS "amount"
-        FROM gro_liquid total, treasury_totals treasury, team_claimed team_c, team_withdrawn team_w, investor_claimed inv_c
+        SELECT total."total_amount" - total."treasury_amount_minted" - team_c."amount" - team_w."amount" - inv_c."amount" AS "amount"
+        FROM gro_liquid total, team_claimed team_c, team_withdrawn team_w, investor_claimed inv_c
     ),
     /***********************************************************************************************
     **************************************** T O T A L S *******************************************
@@ -418,12 +408,12 @@ WITH
             'Treasury' AS "type",
             13000000 AS "quota",
             13000000 / CAST(100000000 AS DOUBLE) AS "quota %",
-            t."amount" AS "total",
-            t."amount" /  CAST(100000000 AS DOUBLE) AS "total %",
-            t."amount" * lp."gro_price" AS "total $",
-            t."amount" AS "liquid",
-            t."amount" * lp."gro_price" AS "liquid $",
-            t."amount" /  CAST(100000000 AS DOUBLE) AS "liquid %",
+            t."treasury_amount_minted" AS "total",
+            t."treasury_amount_minted" /  CAST(100000000 AS DOUBLE) AS "total %",
+            t."treasury_amount_minted" * lp."gro_price" AS "total $",
+            t."treasury_amount_minted" AS "liquid",
+            t."treasury_amount_minted" * lp."gro_price" AS "liquid $",
+            t."treasury_amount_minted" /  CAST(100000000 AS DOUBLE) AS "liquid %",
             0 AS "vesting/ed",
             0 AS "vesting/ed %",
             0 AS "vesting",
@@ -431,7 +421,7 @@ WITH
             0 AS "vested",
             0 AS "vested %",
             lp."gro_price" AS "gro_price"
-        FROM treasury_totals t,
+        FROM gro_liquid t,
              uni_gro_udsc_reserve lp
         ORDER BY 2 DESC
     ),
@@ -462,3 +452,36 @@ SELECT * FROM totals
 UNION ALL
 SELECT * FROM grand_total
 ORDER BY "quota" DESC
+
+
+/*
+-- Treasury was formerly calculated as:
+-- 1) Current liquid GRO (iff GRO in & out)
+-- 2) GRO position in UniswapV2's GRO/USDC pool
+
+    gro_liquid AS (
+        SELECT
+            SUM(
+                CASE
+                    WHEN "to" = 0x359F4fe841f246a095a82cb26F5819E10a91fe0d THEN CAST("value" AS DOUBLE)
+                    WHEN "from" = 0x359F4fe841f246a095a82cb26F5819E10a91fe0d THEN -CAST("value" AS DOUBLE)
+                END
+            ) / 1e18 AS treasury_amount,
+            SUM(
+                CASE
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -CAST("value" AS DOUBLE)
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN CAST("value" AS DOUBLE)
+                END
+            ) / 1e18 AS total_amount
+        FROM gro_ethereum.GROToken_evt_Transfer
+    ),
+    uni_gro_usdc_total AS (
+        SELECT (lp."treasury_position" / lp."supply_amount") * reserve."amount" AS "amount"
+        FROM uni_gro_usdc_amount lp,
+             uni_gro_udsc_reserve reserve
+    ),
+    treasury_totals AS (
+        SELECT liq."treasury_amount" + lp."amount" AS "amount"
+        FROM gro_liquid liq, uni_gro_usdc_total lp
+    ),
+*/
