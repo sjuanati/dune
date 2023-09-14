@@ -1,0 +1,3 @@
+# version 1
+dashboard:              https://dune.com/wint3rmute/gro-rfv
+- token distribution    https://dune.com/queries/3012275/
