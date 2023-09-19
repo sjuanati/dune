@@ -1,0 +1,4 @@
+# version 1
+dashboard:              https://dune.com/wint3rmute/gro-redemption
+- RED gro cumulative    https://dune.com/queries/3028812
+- RED gro totals    	https://dune.com/queries/3028691
