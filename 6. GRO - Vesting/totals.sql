@@ -5,9 +5,7 @@
 */
 
 WITH
-    /***********************************************************************************************
-    ****************************** C O M M U N I T Y  -  GROVesting ********************************
-    ***********************************************************************************************/
+    -- GROVesting
     vests AS (
         SELECT
             "user" AS "user",
@@ -53,20 +51,23 @@ WITH
         FROM vests
         GROUP BY 1
     ),
+    -- All positions were fully vested in September'23 to allow GRO token redemption
     vesting_gro AS (
         SELECT
         "user" AS "user",
         "total_gro" AS "total_gro",
-        CASE
-            WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-                THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-            ELSE 0
-        END as "vesting_gro",
-        CASE
-            WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-                THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-            ELSE total_gro
-        END as "vested_gro"
+        --CASE
+        --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+        --        THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+        --    ELSE 0
+        --END AS "vesting_gro",
+        0 AS "vesting_gro",
+        --CASE
+        --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+        --        THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+        --    ELSE total_gro
+        --END AS "vested_gro"
+        "total_gro" AS "vested_gro"
         FROM total_gro
     ),
     rewards_vesting_totals AS (
@@ -76,9 +77,7 @@ WITH
             SUM("vested_gro") AS "vested"
         FROM vesting_gro
     ),
-    /***********************************************************************************************
-    ********************************* T E A M  -  GROTeamVesting ***********************************
-    ***********************************************************************************************/
+    -- GROTeamVesting
     team_start_date AS (
       SELECT * 
       FROM (VALUES 
@@ -181,9 +180,7 @@ WITH
         SELECT SUM("amount") / 1e18 AS "amount"
         FROM gro_ethereum.GROTeamVesting_evt_LogClaimed
     ),
-    /***********************************************************************************************
-    **************************** I N V E S T O R S  -  GROInvVesting *******************************
-    ***********************************************************************************************/
+-- GROInvVesting
     investor_start_date AS (
     SELECT * FROM (VALUES 
         (0xf7d74a3e2295a860cdd88b901940b367737e8a8f, 1632844845),

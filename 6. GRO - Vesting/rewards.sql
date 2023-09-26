@@ -50,21 +50,24 @@ WITH
     rewards_total_gro_acc AS (
         SELECT "user" AS "user", sum("amount") AS "total_gro", max("startTime") AS "startTime" FROM rewards_total_gro GROUP BY 1
     ),
+    -- All positions were fully vested in September'23 to allow GRO token redemption
     rewards_vesting AS (
         SELECT
             "user" AS "user",
             "startTime" AS "startDate",
             "total_gro" AS "total_gro",
-            CASE
-                WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-                    THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-                ELSE 0
-            END as "vesting_gro",
-            CASE
-                WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-                    THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-                ELSE total_gro
-            END as "vested_gro"
+            --CASE
+            --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+            --        THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+            --    ELSE 0
+            --END as "vesting_gro",
+            0 AS "vesting_gro",
+            --CASE
+            --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+            --        THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+            --    ELSE total_gro
+            --END as "vested_gro"
+            "total_gro" AS  "vested_gro"
         FROM rewards_total_gro_acc
     )
     
@@ -76,5 +79,5 @@ SELECT
     "vesting_gro" AS "vesting",
     "vested_gro" AS "vested"
 FROM rewards_vesting
-WHERE "vesting_gro" > 0.01
+WHERE "total_gro" > 0.00001
 ORDER BY "total_gro" DESC
