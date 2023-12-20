@@ -30,14 +30,17 @@ WITH
             "contract_address",
             CAST("amount" AS DOUBLE) / 1e18 AS "amount"
         FROM gro_ethereum.GROHodlerV3_evt_LogBonusAdded
+    ),
+    total AS (
+        SELECT
+            "current_date",
+            "amount",
+            SUM("amount") OVER (ORDER BY "current_date" ASC ROWS BETWEEN unbounded preceding AND CURRENT ROW) AS "acc_amount",
+            "contract_address",
+            "evt_tx_hash"
+        FROM bonus
+        GROUP BY 1,2,4,5
+        ORDER BY 1 DESC
     )
-
-SELECT
-    "current_date",
-    "amount",
-    SUM("amount") OVER (ORDER BY "current_date" ASC ROWS BETWEEN unbounded preceding AND CURRENT ROW) AS "acc_amount",
-    "contract_address",
-    "evt_tx_hash"
-FROM bonus
-GROUP BY 1,2,4,5
-ORDER BY 1 DESC
+    
+SELECT * FROM total where acc_amount > 0
