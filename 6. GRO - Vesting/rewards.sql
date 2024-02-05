@@ -8,7 +8,6 @@
 ///     vesting = GROVesting(0x748218256AfE0A19a88EBEB2E0C5Ce86d2178360).vestingBalance()
 ///     vested = GROVesting(0x748218256AfE0A19a88EBEB2E0C5Ce86d2178360).vestedBalance()
 */
-
 WITH
     rewards_total_gro AS (
         SELECT
@@ -56,18 +55,18 @@ WITH
             "user" AS "user",
             "startTime" AS "startDate",
             "total_gro" AS "total_gro",
-            --CASE
-            --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-            --        THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-            --    ELSE 0
-            --END as "vesting_gro",
-            0 AS "vesting_gro",
-            --CASE
-            --    WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
-            --        THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
-            --    ELSE total_gro
-            --END as "vested_gro"
-            "total_gro" AS  "vested_gro"
+            CASE
+                WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+                    THEN "total_gro" - "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+                ELSE 0
+            END as "vesting_gro",
+            --0 AS "vesting_gro",
+            CASE
+                WHEN "startTime" + 31556952 > FLOOR(TO_UNIXTIME(current_timestamp))
+                    THEN "total_gro" * (FLOOR(TO_UNIXTIME(current_timestamp)) - "startTime") / (31556952)
+                ELSE total_gro
+            END as "vested_gro"
+            --"total_gro" AS  "vested_gro"
         FROM rewards_total_gro_acc
     )
     
