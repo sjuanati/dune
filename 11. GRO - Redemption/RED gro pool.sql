@@ -29,11 +29,14 @@ WITH
     ),
     -- Calculate total cUSDC deposited in redemption
     cusdc_deposited AS (
-        SELECT COALESCE(SUM(CAST("amount" AS DOUBLE) / 1e18), 0) AS "cusdc_deposited"
+        SELECT COALESCE(SUM(CAST("amount" AS DOUBLE) / 1e8), 0) AS "cusdc_deposited"
         FROM gro_ethereum.RedemptionPool_evt_CUSDCDeposit
+        WHERE evt_block_number <= 18428468 -- redemption deadline block
     ),
     cusdc_price AS (
-        SELECT "price" AS "cusdc_value"
+        SELECT 
+            --"price" AS "cusdc_value"
+            0.0231 AS "cusdc_value" -- at the time of redemption
         FROM prices.usd
         WHERE contract_address = 0x39AA39c021dfbaE8faC545936693aC917d5E7563
         ORDER BY "minute"
@@ -46,6 +49,7 @@ WITH
                 WHEN "from" = 0x0000000000000000000000000000000000000000 THEN CAST("value" AS DOUBLE)
             END / 1e18 AS amount
         FROM gro_ethereum.GROToken_evt_Transfer
+        WHERE evt_block_number <= 18428468 -- redemption deadline block
     ),
     -- TODO: add vested amounts from main, team & investors
     gro_total AS (
@@ -62,7 +66,7 @@ WITH
             CASE
                 WHEN cd."cusdc_deposited" = 0 THEN 0
                 WHEN cp."cusdc_value" = 0 THEN 0
-                ELSE  gdt."amount" / (cd."cusdc_deposited" * cp."cusdc_value")
+                ELSE (cd."cusdc_deposited" * cp."cusdc_value") / gdt."amount"
             END AS "redemption_value"
         FROM cusdc_deposited cd, cusdc_price cp, gro_deposited_total gdt, gro_total gt
     )
@@ -77,7 +81,7 @@ SELECT
     cusdc_v."cusdc_value",
     rv."treasury_value",
     rv."redemption_value" AS "redemption_value2",
-    rv."theo_redemption_value"
+    0.25 AS "theo_redemption_value"--rv."theo_redemption_value"
 FROM
     gro_deposited gd,
     gro_deposited_total gdt,
