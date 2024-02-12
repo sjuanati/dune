@@ -26,7 +26,7 @@ WITH gro_vesting AS (
 
 -- get the max value per day
 SELECT 
-    SUBSTR(CAST(DATE_TRUNC('day', evt_block_time) AS varchar), 1, 10) as "date",
+    CAST(DATE_TRUNC('day', evt_block_time) AS DATE) as "date",
     vesting_gro AS "total_gro"
 FROM gro_vesting
 WHERE rn = 1
