@@ -1,0 +1,13 @@
+# version 1
+dashboard:				https://dune.com/steakhouse_challenge/ensv2
+- ENS - Price          			https://dune.com/queries/3424972
+- ENS - Balance Sheet			https://dune.com/queries/3443551
+- ENS - Yearly Balance Sheet Table	https://dune.com/queries/3443633
+- ENS - PnL				https://dune.com/queries/3443672
+- ENS - Revenues per day		https://dune.com/queries/3443676
+- ENS - Holdings over time		https://dune.com/queries/3444355
+- ENS - Holdings over time per wallet	https://dune.com/queries/3443694
+- ENS - Balances summary		https://dune.com/queries/3444386
+- ENS - Registrations per day		https://dune.com/queries/3444435
+- ENS - Endowment			https://dune.com/queries/3444945
+- ENS - Endowment Ranking		https://dune.com/queries/3446265
