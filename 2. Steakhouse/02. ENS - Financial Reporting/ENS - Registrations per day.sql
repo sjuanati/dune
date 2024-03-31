@@ -6,7 +6,7 @@
 -- @version:
     - 2.0 - 2024-02-18 - Added comment header, added ETH Registrar 4, removed cash data (already shown
     in query 'ENS - Revenues per day')
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-08 - Initial version
 */
 
 WITH
@@ -56,4 +56,4 @@ SELECT
     new_cnt + COALESCE(renew_cnt, 0) AS cnt
 FROM summary
 WHERE period > CURRENT_DATE - interval '90' day
-ORDER BY 1 DESC;
+ORDER BY 1 DESC

@@ -5,13 +5,13 @@
 -- @notes: N/A
 -- @version:
     - 2.0 - 2024-02-19 - Added comment header, updated query formatting
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-02 - Initial version
 */
 
 with entries as (
     select * from query_2244104 -- result_ens_accounting_main
 ),
-items as (
+daily_items as (
     select 
         '1' as rk,
         'Registrations' as item,
@@ -37,6 +37,10 @@ items as (
     group by 3
 )
 
-select *
-from items
-where period >= current_date - interval '365' day;
+select 
+    di.rk, 
+    di.item, 
+    di.period, 
+    di.amount
+from daily_items di
+where di.period >= current_date - interval '365' day

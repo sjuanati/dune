@@ -5,7 +5,7 @@
 -- @notes: N/A
 -- @version:
     - 2.0 - 2024-02-19 - Added comment header, updated final query to retrieve data for year 2024
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-02 - Initial version
 */
 
 with entries as (
@@ -83,7 +83,6 @@ pivot as (
     from balances
     group by 1, 2
 )
-
 select *
 from pivot
-order by rk asc;
+order by rk asc

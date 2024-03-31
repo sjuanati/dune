@@ -11,4 +11,4 @@ select item, period, balance
 from query_2840308 -- ENS - Endowment
 where period = (select MAX(period) from query_2840308)
   and balance > 1
-order by balance desc;
+order by balance desc

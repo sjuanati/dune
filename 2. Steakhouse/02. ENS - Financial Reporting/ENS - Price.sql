@@ -5,7 +5,7 @@
 -- @notes: N/A
 -- @version:
     - 2.0 - 2024-02-19 - Added comment header, updated query formatting
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-06-16 - Initial version
 */
 
 WITH

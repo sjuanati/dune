@@ -6,7 +6,7 @@
 -- @notes: N/A
 -- @version:
     - 2.0 - 2024-02-19 - Added comment header
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-08 - Initial version
 */
 
 WITH entries AS (
@@ -52,4 +52,4 @@ JOIN total_assets USING (period)
 WHERE period > CURRENT_DATE - INTERVAL '3' YEAR
 ORDER BY
     period DESC,
-    rk ASC;
+    rk ASC

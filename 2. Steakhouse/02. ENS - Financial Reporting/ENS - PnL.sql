@@ -5,7 +5,7 @@
 -- @notes: N/A
 -- @version:
     - 2.0 - 2024-02-19 - Added comment header
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-08 - Initial version
 */
 
 with entries as (
@@ -40,9 +40,8 @@ items as (
     from entries
     group by period
 )
-
 select item, period, amount
 from items
 where period >= current_date - interval '3' year
-  and period < date_trunc('month', current_date)
-order by rk asc;
+    and period < date_trunc('month', current_date)
+order by rk asc

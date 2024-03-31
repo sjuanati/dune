@@ -1,13 +1,18 @@
-# version 1
-dashboard:				https://dune.com/steakhouse_challenge/ensv2
-- ENS - Price          			https://dune.com/queries/3424972
-- ENS - Balance Sheet			https://dune.com/queries/3443551
-- ENS - Yearly Balance Sheet Table	https://dune.com/queries/3443633
-- ENS - PnL				https://dune.com/queries/3443672
-- ENS - Revenues per day		https://dune.com/queries/3443676
-- ENS - Holdings over time		https://dune.com/queries/3444355
-- ENS - Holdings over time per wallet	https://dune.com/queries/3443694
-- ENS - Balances summary		https://dune.com/queries/3444386
-- ENS - Registrations per day		https://dune.com/queries/3444435
-- ENS - Endowment			https://dune.com/queries/3444945
-- ENS - Endowment Ranking		https://dune.com/queries/3446265
+dashboard:				            https://dune.com/steakhouse/ens-steakhouse
+- ENS - Price          			    https://dune.com/queries/1355395
+- ENS - Balance Sheet			    https://dune.com/queries/2840252
+- ENS - Balances summary            https://dune.com/queries/1778286
+- ENS - Yearly Balance Sheet Table  https://dune.com/queries/2840098
+- ENS - PnL				            https://dune.com/queries/3182452
+- ENS - Revenues per day		    https://dune.com/queries/3069494
+- ENS - Revenues per month closed   https://dune.com/queries/3521525
+- ENS - Holdings over time		    https://dune.com/queries/1757839
+- ENS - Holdings over time per wallet	https://dune.com/queries/1778942
+- ENS - Cashflows per day           https://dune.com/queries/3069516
+- ENS - Cashflows per month closed  https://dune.com/queries/3522362
+- ENS - Cash burn per month closed  https://dune.com/queries/3536831
+- ENS - Registrations per day		https://dune.com/queries/1347864
+- ENS - Endowment			        https://dune.com/queries/2840308
+- ENS - Endowment Ranking		    https://dune.com/queries/3446265
+- ENS - Endowment per month closed  https://dune.com/queries/3528036
+

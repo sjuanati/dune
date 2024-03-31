@@ -11,6 +11,7 @@
     - 1.0 - ????-??-?? - Initial version
 */
 with wallets as (
+
     select 0x283af0b28c62c092c9727f1ee09c02ca627eb7f5 as wallet, 'ETH Registrar 3' as name
     union all
     select 0x253553366Da8546fC250F225fe3d25d0C782303b as wallet, 'ETH Registrar 4' as name
@@ -28,7 +29,6 @@ tokens as (
             )
 ),
 tokenflows as (
-    -- ERC-20 tokens: ENS, USDC and WETH
     select evt_block_time as ts, wallet, "to" as counterparty, contract_address, symbol, -cast(value as double) as qty
     from erc20_ethereum.evt_Transfer
     inner join tokens using (contract_address)
@@ -41,14 +41,13 @@ tokenflows as (
     inner join wallets on "to" = wallet
     where evt_block_number > 9380471 --2020.01.30
     union all
-    -- Non ERC-20 tokens: ETH
     select block_time as ts, wallet, "to" as counterparty, 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 as contract_address, 'WETH' as symbol, -cast(value as double) as qty
     from ethereum.traces
     inner join wallets on "from" = wallet
     where success = TRUE
         and (call_type not in ('delegatecall', 'callcode', 'staticcall') or call_type is null)
         and to not in (0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) -- WETH, doesn't have ERC20 mint
-        and block_number > 9380471 --2020.01.30
+    AND block_number > 9380471 --2020.01.30
     union all
     select block_time as ts, wallet, "from" as counterparty, 0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2 as contract_address, 'WETH' as symbol, cast(value as double) as qty
     from ethereum.traces
@@ -56,13 +55,13 @@ tokenflows as (
     where success = TRUE
         and (call_type not in ('delegatecall', 'callcode', 'staticcall') or call_type is null)
         and "from" not in (0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2) -- WETH, doesn't have ERC20 burn
-        and block_number > 9380471 --2020.01.30
+    AND block_number > 9380471 --2020.01.30
     union all
-    -- Period sequence
     select period as ts, wallet, null as counterparty, contract_address, symbol, null as qty
-    from unnest(sequence(current_date - interval '14' day, current_date - interval '1' day, interval '1' day)) as t(period)
+    from unnest(sequence(date('2020-01-01'), current_date - interval '1' day, interval '1' day)) as t(period)
     cross join wallets
     cross join tokens
+
 ),
 grp_asset_period as (
     select cast(ts as date) as period, wallet, contract_address, symbol, sum(qty) as qty
@@ -85,10 +84,9 @@ details as (
     from balance
     inner join prices using (period, contract_address)
 )
-
-select name, symbol, coalesce(qty/divisor,0) as qty, usd_price as usd_price, coalesce(usd_value/divisor,0) as usd_value
+select name, symbol, qty/divisor as qty, usd_price as usd_price, usd_value/divisor as usd_value
 from details
 inner join wallets using (wallet)
 inner join tokens using (contract_address)
 where period = current_date - interval '1' day
-order by 1 asc, 2 asc;
+order by 1 asc, 2 asc

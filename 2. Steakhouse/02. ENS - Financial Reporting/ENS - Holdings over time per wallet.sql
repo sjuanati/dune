@@ -8,7 +8,7 @@
     - Current ENS wallets are DAO wallet and ETH Registrar controllers 3 & 4
 -- @version:
     - 2.0 - 2024-02-18 - Added comment header, ETH Registrar 4, and filter by block number
-    - 1.0 - ????-??-?? - Initial version
+    - 1.0 - 2023-10-02 - Initial version
 */
 
 with wallets as (
@@ -93,9 +93,8 @@ details_lag as (
         lag(usd_price) over (partition by wallet, contract_address order by period asc) as lag_qty
     from details_1
 )
-
 select period, name, sum(usd_value) as usd_value
 from details_lag
 inner join wallets using (wallet)
 group by 1,2
-order by 1 desc;
+order by 1 desc
