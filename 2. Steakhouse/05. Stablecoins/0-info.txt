@@ -1,0 +1,4 @@
+dashboard:              https://dune.com/wint3rmute/stablecoins-multichain
+- Details               https://dune.com/queries/3678970
+- Ethereum overview     https://dune.com/queries/3581067
+- Ethereum charts       https://dune.com/queries/3556363
