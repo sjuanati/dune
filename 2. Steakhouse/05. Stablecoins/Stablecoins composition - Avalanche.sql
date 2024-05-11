@@ -1,12 +1,12 @@
 WITH
     asset_type AS (
-        SELECT asset, address
+        SELECT asset, address, category
         FROM (VALUES 
-            ('USDC', 0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e),
-            ('USDT', 0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7),
-            ('USP', 0xdacde03d7ab4d81feddc3a20faa89abac9072ce2),
-            ('DAI', 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70)
-        ) AS t(asset, address)
+            ('USDC', 0xb97ef9ef8734c71904d8002f8b6bc66dd9c48a6e, 'fiat-backed'),
+            ('USDT', 0x9702230a8ea53601f5cd2dc00fdbc13d4df4a8c7, 'fiat-backed'),
+            ('USP', 0xdacde03d7ab4d81feddc3a20faa89abac9072ce2, 'crypto-backed'),
+            ('DAI', 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70, 'crypto-backed')
+        ) AS t(asset, address, category)
     ),
     period_range AS (
         SELECT asset, dt_seq, 0 AS amount, 0 AS volume, 0 AS txn_count
@@ -100,6 +100,7 @@ WITH
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
             cd.asset,
+            at.category,
             cd.dt,
             cd.txn_count AS txn_count,
             cd.volume,
@@ -113,8 +114,9 @@ WITH
         SELECT
             address,
             asset,
+            category,
             CONCAT(
-                '<a href="https://etherscan.io/token/',
+                '<a href="https://snowtrace.io/token/',
                 CAST(address AS varchar),
                 '" target="_blank">🔗</a> ',
                 asset

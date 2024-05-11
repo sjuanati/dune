@@ -1,13 +1,13 @@
 WITH
     asset_type AS (
-        SELECT asset, address
+        SELECT asset, address, category
         FROM (VALUES 
-            ('USDC', 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359), -- + usdc_pos = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
-            ('USDT', 0xc2132d05d31c914a87c6611c10748aeb04b58e8f),
-            ('DAI', 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063),
-            ('FRAX', 0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89),
-            ('EURS', 0xe111178a87a3bff0c8d18decba5798827539ae99)
-        ) AS t(asset, address)
+            ('USDC', 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359, 'fiat-backed'), -- + usdc_pos = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174
+            ('USDT', 0xc2132d05d31c914a87c6611c10748aeb04b58e8f, 'fiat-backed'),
+            ('DAI', 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063, 'crypto-backed'),
+            ('FRAX', 0x45c32fA6DF82ead1e2EF74d17b76547EDdFaFF89, 'algorithmic'),
+            ('EURS', 0xe111178a87a3bff0c8d18decba5798827539ae99, 'fiat-backed')
+        ) AS t(asset, address, category)
     ),
     period_range AS (
         SELECT asset, dt_seq, 0 AS amount, 0 as volume, 0 AS txn_count
@@ -137,6 +137,7 @@ WITH
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
             cd.asset,
+            at.category,
             cd.dt,
             cd.txn_count AS txn_count,
             cd.volume,
@@ -150,8 +151,9 @@ WITH
         SELECT
             address,
             asset,
+            category,
             CONCAT(
-                '<a href="https://etherscan.io/token/',
+                '<a href="https://polygonscan.com/token/',
                 CAST(address AS varchar),
                 '" target="_blank">🔗</a> ',
                 asset

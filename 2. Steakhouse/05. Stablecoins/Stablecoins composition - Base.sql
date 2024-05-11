@@ -1,3 +1,4 @@
+
 WITH
     asset_type AS (
         SELECT asset, address, category

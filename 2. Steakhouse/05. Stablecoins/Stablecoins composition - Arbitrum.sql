@@ -1,13 +1,16 @@
+-- header tbd
+-- category based on defillama.com
+
 WITH
     asset_type AS (
-        SELECT asset, address
+        SELECT asset, address, category
         FROM (VALUES
-            ('USDC', 0xaf88d065e77c8cC2239327C5EDb3A432268e5831),
-            ('USDT', 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9),
-            ('DAI', 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1),
-            ('FRAX', 0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F),
-            ('MIM', 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A)
-        ) AS t(asset, address)
+            ('USDC', 0xaf88d065e77c8cC2239327C5EDb3A432268e5831, 'fiat-backed'),
+            ('USDT', 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9, 'fiat-backed'),
+            ('DAI', 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1, 'crypto-backed'),
+            ('FRAX', 0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F, 'algorithmic'),
+            ('MIM', 0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A, 'crypto-backed')
+        ) AS t(asset, address, category)
     ),
     period_range AS (
         SELECT asset, dt_seq, 0 AS amount, 0 AS volume, 0 AS txn_count
@@ -124,6 +127,7 @@ WITH
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
             cd.asset,
+            at.category,
             cd.dt,
             cd.txn_count AS txn_count,
             cd.volume,
@@ -137,8 +141,9 @@ WITH
         SELECT
             address,
             asset,
+            category,
             CONCAT(
-                '<a href="https://etherscan.io/token/',
+                '<a href="https://arbiscan.io/token/',
                 CAST(address AS varchar),
                 '" target="_blank">🔗</a> ',
                 asset

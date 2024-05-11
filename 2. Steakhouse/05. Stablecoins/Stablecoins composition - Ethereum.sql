@@ -5,24 +5,31 @@
 
 WITH
     asset_type AS (
-        SELECT asset, address
+        SELECT asset, address, category
         FROM (VALUES 
-            ('USDC', 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48),
-            ('USDT', 0xdac17f958d2ee523a2206206994597c13d831ec7),
-            ('DAI', 0x6b175474e89094c44da98b954eedeac495271d0f),
-            ('FRAX', 0x853d955acef822db058eb8505911ed77f175b99e),
-            ('USDP', 0x8e870d67f660d95d5be530380d0ec0bd388289e1),
-            ('GUSD', 0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd),
-            ('BUSD', 0x4fabb145d64652a948d72533023f6e7a623c7c53),
-            ('TUSD', 0x0000000000085d4780B73119b644AE5ecd22b376),
-            ('LUSD', 0x5f98805A4E8be255a32880FDeC7F6728C6568bA0),
-            ('FDUSD', 0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409),
-            ('PYUSD', 0x6c3ea9036406852006290770bedfcaba0e23a0e8),
-            ('crvUSD', 0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E),
-            ('USDe', 0x4c9edd5852cd905f086c759e8383e09bff1e68b3),
-            ('sDAI', 0x83F20F44975D03b1b09e64809B757c47f942BEeA),
-            ('BUIDL', 0x7712c34205737192402172409a8F7ccef8aA2AEc)
-        ) AS t(asset, address)
+            ('USDC', 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48, 'fiat-backed'),
+            ('USDT', 0xdac17f958d2ee523a2206206994597c13d831ec7, 'fiat-backed'),
+            ('DAI', 0x6b175474e89094c44da98b954eedeac495271d0f, 'crypto-backed'),
+            ('FRAX', 0x853d955acef822db058eb8505911ed77f175b99e, 'algorithmic'),
+            ('USDP', 0x8e870d67f660d95d5be530380d0ec0bd388289e1, 'fiat-backed'),
+            ('GUSD', 0x056Fd409E1d7A124BD7017459dFEa2F387b6d5Cd, 'fiat-backed'),
+            ('BUSD', 0x4fabb145d64652a948d72533023f6e7a623c7c53, 'crypto-backed'), -- depends
+            ('TUSD', 0x0000000000085d4780B73119b644AE5ecd22b376, 'fiat-backed'),
+            ('LUSD', 0x5f98805A4E8be255a32880FDeC7F6728C6568bA0, 'crypto-backed'),
+            ('FDUSD', 0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409, 'fiat-backed'),
+            ('PYUSD', 0x6c3ea9036406852006290770bedfcaba0e23a0e8, 'fiat-backed'),
+            ('crvUSD', 0xf939E0A03FB07F59A73314E73794Be0E57ac1b4E, 'crypto-backed'),
+            ('USDe', 0x4c9edd5852cd905f086c759e8383e09bff1e68b3, 'crypto-backed'),
+            ('sDAI', 0x83F20F44975D03b1b09e64809B757c47f942BEeA, 'crypto-backed'),
+            ('BUIDL', 0x7712c34205737192402172409a8F7ccef8aA2AEc, 'fiat-backed'),
+            ('FPI', 0x5Ca135cB8527d76e932f34B5145575F9d8cbE08E, 'algorithmic'),
+            ('USDY', 0x96f6ef951840721adbf46ac996b59e0235cb985c, 'fiat-backed'),
+            ('AEUR', 0xA40640458FBc27b6EefEdeA1E9C9E17d4ceE7a21, 'fiat-backed'),
+            ('GHO', 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f, 'crypto-backed'),
+            ('sUSD', 0x57ab1ec28d129707052df4df418d58a2d46d5f51, 'crypto-backed'),
+            ('DOLA', 0x865377367054516e17014CcdED1e7d814EDC9ce4, 'crypto-backed'),
+            ('BEAN', 0xBEA0000029AD1c77D3d5D23Ba2D8893dB9d1Efab, 'algorithmic')
+        ) AS t(asset, address, category)
     ),
     period_range AS (
         SELECT asset, dt_seq, 0 AS amount, 0 AS volume, 0 AS txn_count
@@ -306,6 +313,132 @@ WITH
         AND DATE(evt_block_time) > DATE '2024-02-29'
         GROUP BY 1, 2
     ),
+    fpi AS (
+        SELECT
+            'FPI' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0x5Ca135cB8527d76e932f34B5145575F9d8cbE08E -- FPI
+        AND DATE(evt_block_time) > DATE '2022-03-28'
+        GROUP BY 1, 2
+    ),
+    usdy AS (
+        SELECT
+            'USDY' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0x96f6ef951840721adbf46ac996b59e0235cb985c -- USDY
+        AND DATE(evt_block_time) > DATE '2023-07-10'
+        GROUP BY 1, 2
+    ),
+    aeur AS (
+        SELECT
+            'AEUR' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0xA40640458FBc27b6EefEdeA1E9C9E17d4ceE7a21 -- AEUR
+        AND DATE(evt_block_time) > DATE '2023-07-19'
+        GROUP BY 1, 2
+    ),
+    gho AS (
+        SELECT
+            'GHO' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0x40D16FC0246aD3160Ccc09B8D0D3A2cD28aE6C2f -- GHO
+        AND DATE(evt_block_time) > DATE '2023-07-14'
+        GROUP BY 1, 2
+    ),
+    susd AS (
+        SELECT
+            'sUSD' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0x57ab1ec28d129707052df4df418d58a2d46d5f51 -- SUSD
+        AND DATE(evt_block_time) > DATE '2019-09-25'
+        GROUP BY 1, 2
+    ),
+    dola AS (
+        SELECT
+            'DOLA' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0x865377367054516e17014CcdED1e7d814EDC9ce4 -- DOLA
+        AND DATE(evt_block_time) > DATE '2021-02-22'
+        GROUP BY 1, 2
+    ),
+    bean AS (
+        SELECT
+            'BEAN' as asset,
+            DATE(evt_block_time) AS dt,
+            SUM(
+                CASE
+                    WHEN "from" = 0x0000000000000000000000000000000000000000 THEN value
+                    WHEN "to" = 0x0000000000000000000000000000000000000000 THEN -value
+                    ELSE 0
+                END)
+            / 1e18 AS amount,
+            SUM(value) / 1e18 AS volume,
+            COUNT(*) AS txn_count
+        FROM erc20_ethereum.evt_transfer
+        WHERE contract_address = 0xBEA0000029AD1c77D3d5D23Ba2D8893dB9d1Efab -- BEAN
+        AND DATE(evt_block_time) > DATE '2022-08-03'
+        GROUP BY 1, 2
+    ),
     combined_data AS (
         SELECT
             asset,
@@ -314,36 +447,28 @@ WITH
             SUM(volume) AS volume,
             SUM(txn_count) AS txn_count
         FROM (
-            SELECT * FROM usdc
-            UNION ALL
-            SELECT * FROM usdt
-            UNION ALL
-            SELECT * FROM dai
-            UNION ALL
-            SELECT * FROM frax
-            UNION ALL
-            SELECT * FROM usdp
-            UNION ALL
-            SELECT * FROM gusd
-            UNION ALL
-            SELECT * FROM busd
-            UNION ALL
-            SELECT * FROM tusd
-            UNION ALL
-            SELECT * FROM lusd
-            UNION ALL
-            SELECT * FROM fdusd
-            UNION ALL
-            SELECT * FROM pyusd
-            UNION ALL
-            SELECT * FROM crvusd
-            UNION ALL
-            SELECT * FROM usde
-            UNION ALL
-            SELECT * FROM sdai
-            UNION ALL
-            SELECT * FROM buidl
-            UNION ALL
+            SELECT * FROM usdc UNION ALL
+            SELECT * FROM usdt UNION ALL
+            SELECT * FROM dai UNION ALL
+            SELECT * FROM frax UNION ALL
+            SELECT * FROM usdp UNION ALL
+            SELECT * FROM gusd UNION ALL
+            SELECT * FROM busd UNION ALL
+            SELECT * FROM tusd UNION ALL
+            SELECT * FROM lusd UNION ALL
+            SELECT * FROM fdusd UNION ALL
+            SELECT * FROM pyusd UNION ALL
+            SELECT * FROM crvusd UNION ALL
+            SELECT * FROM usde UNION ALL
+            SELECT * FROM sdai UNION ALL
+            SELECT * FROM buidl UNION ALL
+            SELECT * FROM fpi UNION ALL
+            SELECT * FROM usdy UNION ALL
+            SELECT * FROM aeur UNION ALL
+            SELECT * FROM gho UNION ALL
+            SELECT * FROM susd UNION ALL
+            SELECT * FROM dola UNION ALL
+            SELECT * FROM bean UNION ALL
             SELECT * FROM period_range
         )
         GROUP BY 1, 2
@@ -352,6 +477,7 @@ WITH
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
             cd.asset,
+            at.category,
             cd.dt,
             cd.txn_count AS txn_count,
             cd.volume,
@@ -365,6 +491,7 @@ WITH
         SELECT
             address,
             asset,
+            category,
             CONCAT(
                 '<a href="https://etherscan.io/token/',
                 CAST(address AS varchar),

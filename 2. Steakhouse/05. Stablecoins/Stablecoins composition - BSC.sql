@@ -1,13 +1,13 @@
 WITH
     asset_type AS (
-        SELECT asset, address
+        SELECT asset, address, category
         FROM (VALUES
-            ('USDT', 0x55d398326f99059fF775485246999027B3197955),
-            ('USDC', 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d),
-            ('BUSD', 0xe9e7cea3dedca5984780bafc599bd69add087d56),
-            ('FDUSD', 0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409),
-            ('DAI', 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3)
-        ) AS t(asset, address)
+            ('USDT', 0x55d398326f99059fF775485246999027B3197955, 'fiat-backed'),
+            ('USDC', 0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d, 'fiat-backed'),
+            ('BUSD', 0xe9e7cea3dedca5984780bafc599bd69add087d56, 'crypto-backed'),
+            ('FDUSD', 0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409, 'fiat-backed'),
+            ('DAI', 0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3, 'crypto-backed')
+        ) AS t(asset, address, category)
     ),
     period_range AS (
         SELECT asset, dt_seq, 0 AS amount, 0 as volume, 0 AS txn_count
@@ -126,6 +126,7 @@ WITH
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
             cd.asset,
+            at.category,
             cd.dt,
             cd.txn_count AS txn_count,
             cd.volume,
@@ -139,8 +140,9 @@ WITH
         SELECT
             address,
             asset,
+            category,
             CONCAT(
-                '<a href="https://etherscan.io/token/',
+                '<a href="https://bscscan.com/token/',
                 CAST(address AS varchar),
                 '" target="_blank">🔗</a> ',
                 asset
