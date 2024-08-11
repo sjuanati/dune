@@ -1,62 +1,51 @@
-/*
-kpis:
-- total market cap (ie: 130B)
-- dominance per asset (ie: USDT 43%)
-- dominance per category (ie: crypto-backed: 80% )
-- dominance per chain
-
-*/
-
-/*
-SELECT 'ethereum', category, sum("Market Cap") as "Market Cap" FROM query_3581067 GROUP BY 1, 2
-UNION ALL
-SELECT 'arbitrum', category, sum("Market Cap") as "Market Cap" FROM query_3679025 GROUP BY 1, 2
-UNION ALL
-SELECT 'polygon', category, sum("Market Cap") as "Market Cap" FROM query_3679021 GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-UNION ALL
-SELECT 'xxxxxx', category, sum("Market Cap") as "Market Cap" FROM query_xxxxx GROUP BY 1, 2
-*/
-
--- get only the latest date of all queries
-
 with
     data as (
-        select 'arbitrum' as chain, 'algorithmic' as category, 36817746 as "Market Cap"
+        select asset_name as asset, 'ethereum' as chain, category, sum("Market Cap") as market_cap
+        from dune.wint3rmute.result_stablecoins_composition_ethereum_overview
+        group by 1, 2, 3
         union all
-        select 'arbitrum' as chain, 'crypto-backed' as category, 114987667 as "Market Cap"
+        select asset_name, 'arbitrum', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_arbitrum_overview
+        group by 1, 2, 3
         union all
-        select 'arbitrum' as chain, 'fiat-backed' as category, 3441450565 as "Market Cap"
+        select asset_name, 'polygon', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_polygon_overview
+        group by 1, 2, 3
         union all
-        select 'polygon' as chain, 'algorithmic' as category, 3374057 as "Market Cap"
+        select asset_name, 'bsc', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_bsc_overview
+        group by 1, 2, 3
         union all
-        select 'polygon' as chain, 'fiat-backed' as category, 1400585676 as "Market Cap"
+        select asset_name, 'avalanche', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_avalanche_overview
+        group by 1, 2, 3
         union all
-        select 'polygon' as chain, 'crypto-backed' as category, 183597753 as "Market Cap"
+        select asset_name, 'base', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_base_overview
+        group by 1, 2, 3
+        union all
+        select asset_name, 'optimism', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_optimism_overview
+        group by 1, 2, 3
+        union all
+        select asset_name, 'tron', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_tron_overview
+        group by 1, 2, 3
+        union all
+        select asset_name, 'solana', category, sum("Market Cap")
+        from dune.wint3rmute.result_stablecoins_composition_solana_overview
+        group by 1, 2, 3
     ),
     totals as (
         select
+            asset,
             chain,
             category,
-            "Market Cap",
-            sum("Market Cap") over () as "Total",
-            100.0 * sum("Market Cap") over (partition by chain) / sum("Market Cap") over () as "Total per chain",
-            100.0 * sum("Market Cap") over (partition by category) / sum("Market Cap") over () as "Total per cat"
+            market_cap,
+            sum(market_cap / 1e9)  over () as "Total"
+            --sum(market_cap) over (partition by chain) / sum(market_cap) over () as "Total x Chain",
+            --sum(market_cap) over (partition by category) / sum(market_cap) over () as "Total x Category",
+            --sum(market_cap) over (partition by asset) / sum(market_cap) over () as "Total x Asset"
         from data
     )
 

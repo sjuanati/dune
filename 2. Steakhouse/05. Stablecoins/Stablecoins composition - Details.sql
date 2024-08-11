@@ -2,25 +2,27 @@
 WITH
     overview AS (
         SELECT
-            eth.asset_link AS "Asset",
-            eth.dt AS "Date",
-            eth.txn_count,
-            eth.balance * COALESCE(pr.price, 1) AS "Market Cap",
+            t.asset as asset_name,
+            t.asset_link AS "Asset",
+            t.dt AS "Date",
+            t.category,
+            t.txn_count,
+            t.balance * COALESCE(pr.price, 1) AS "Market Cap",
             pr.price AS "Price",
-            (COALESCE(pr.price, 1) - 1) * 10000 AS "Peg (bps)",
-            eth.balance AS "Total Supply",
-            eth.balance_7d_ago,
-            IF(ABS(eth.balance_pct_7d) < 1e-4, 0, eth.balance_pct_7d) AS "% Supply 7d",
-            eth.balance_30d_ago,
-            IF(ABS(eth.balance_pct_30d) < 1e-4, 0, eth.balance_pct_30d) AS "% Supply 30d",
-            eth.volume AS "Volume",
-            eth.volume_7d_ago,
-            IF(ABS(eth.volume_pct_7d) < 1e-4, 0, eth.volume_pct_7d) AS "% Volume 7d",
-            eth.volume_30d_ago,
-            IF(ABS(eth.volume_pct_30d) < 1e-4, 0, eth.volume_pct_30d) AS "% Volume 30d"
-        FROM {{table}} eth
+            (pr.price - 1) * 10000 AS "Peg (bps)",
+            t.balance AS "Total Supply",
+            t.balance_7d_ago,
+            IF(ABS(t.balance_pct_7d) < 1e-4, 0, t.balance_pct_7d) AS "% Supply 7d",
+            t.balance_30d_ago,
+            IF(ABS(t.balance_pct_30d) < 1e-4, 0, t.balance_pct_30d) AS "% Supply 30d",
+            t.volume AS "Volume",
+            t.volume_7d_ago,
+            IF(ABS(t.volume_pct_7d) < 1e-4, 0, t.volume_pct_7d) AS "% Volume 7d",
+            t.volume_30d_ago,
+            IF(ABS(t.volume_pct_30d) < 1e-4, 0, t.volume_pct_30d) AS "% Volume 30d"
+        FROM {{table}} t
         LEFT JOIN prices.usd_latest pr
-            ON eth.address = pr.contract_address AND pr.blockchain = '{{blockchain}}'
+            ON t.address = pr.contract_address AND pr.blockchain = '{{blockchain}}'
     ),
     totals AS (
         SELECT "Date", SUM("Market Cap") AS "Total Market Cap" FROM overview GROUP BY 1
@@ -48,4 +50,3 @@ SELECT *
 FROM overview ov, totals_last l
 WHERE ov."Date" = CURRENT_DATE
 ORDER BY ov."Market Cap" DESC
-
