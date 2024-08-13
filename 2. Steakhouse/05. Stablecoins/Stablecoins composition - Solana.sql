@@ -92,6 +92,7 @@ WITH
     balances AS (
         SELECT
             COALESCE(at.address, 0x0000000000000000000000000000000000000000) AS address,
+            address_sol,
             cd.asset,
             at.category,
             cd.dt,
@@ -110,7 +111,7 @@ WITH
             category,
             CONCAT(
                 '<a href="https://solscan.io/token/',
-                CAST(address AS varchar),
+                CAST(address_sol AS varchar),
                 '" target="_blank">🔗</a> ',
                 asset
             ) AS asset_link,
@@ -150,3 +151,6 @@ SELECT *
 FROM balances_tt
 WHERE dt > date '2020-01-01'
 ORDER BY dt ASC, balance DESC
+        
+        
+        
