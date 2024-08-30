@@ -85,6 +85,7 @@ WITH
             SUM(value) / 1e6 AS volume,
             COUNT(*) AS txn_count
         FROM circle_ethereum.USDC_evt_Transfer ut
+        WHERE contract_address = 0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48
         GROUP BY 1, 2
     ),
     usdt AS (
@@ -100,6 +101,7 @@ WITH
             SUM(value) / 1e6 AS volume,
             COUNT(*) AS txn_count
         FROM tether_ethereum.Tether_USD_evt_Transfer
+        WHERE contract_address = 0xdac17f958d2ee523a2206206994597c13d831ec7
         GROUP BY 1, 2
         UNION ALL
         SELECT
@@ -109,6 +111,7 @@ WITH
             SUM(amount) / 1e6 AS volume,
             0 AS txn_count
         FROM tether_ethereum.Tether_USD_evt_Issue
+        WHERE contract_address = 0xdac17f958d2ee523a2206206994597c13d831ec7
         GROUP BY 1, 2
         UNION ALL
         SELECT
@@ -118,6 +121,7 @@ WITH
             SUM(amount) / 1e6 AS volume,
             0 AS txn_count
         FROM tether_ethereum.Tether_USD_evt_Redeem
+        WHERE contract_address = 0xdac17f958d2ee523a2206206994597c13d831ec7
         GROUP BY 1, 2
     ),
     dai AS (
@@ -133,6 +137,7 @@ WITH
             SUM(wad) / 1e18 AS volume,
             COUNT(*) AS txn_count
         FROM maker_ethereum.DAI_evt_Transfer
+        WHERE contract_address = 0x6b175474e89094c44da98b954eedeac495271d0f
         GROUP BY 1, 2
     ),
     sdai AS (
@@ -143,6 +148,7 @@ WITH
             SUM(shares) / 1e18 AS volume,
             COUNT(*) AS txn_count
         FROM maker_ethereum.SavingsDai_evt_Deposit
+        WHERE contract_address = 0x83f20f44975d03b1b09e64809b757c47f942beea
         GROUP BY 1, 2
         UNION ALL
         SELECT
@@ -152,6 +158,7 @@ WITH
             SUM(shares) / 1e18 AS volume,
             COUNT(*) AS txn_count
         FROM maker_ethereum.SavingsDai_evt_Withdraw
+        WHERE contract_address = 0x83f20f44975d03b1b09e64809b757c47f942beea
         GROUP BY 1, 2
     ),
     -- usdp: do not use erc20_ethereum.evt_transfer
@@ -168,6 +175,7 @@ WITH
             SUM(value) / 1e18 AS volume,
             COUNT(*) AS txn_count
         FROM usdp_ethereum.USDPImplementationV3_evt_Transfer
+        WHERE contract_address = 0x8e870d67f660d95d5be530380d0ec0bd388289e1
         GROUP BY 1, 2
     ),
     -- gusd: do not use erc20_ethereum.evt_transfer
@@ -184,6 +192,7 @@ WITH
             SUM(_value) / 1e2 AS volume,
             COUNT(*) AS txn_count
         FROM gemini_ethereum.GUSD_evt_Transfer
+        WHERE contract_address = 0x056fd409e1d7a124bd7017459dfea2f387b6d5cd
         GROUP BY 1, 2
     ),
     busd AS (
@@ -199,6 +208,7 @@ WITH
             SUM(value) / 1e18 AS volume,
             COUNT(*) AS txn_count
         FROM busd_ethereum.BUSDImplementation_evt_Transfer
+        WHERE contract_address = 0x4fabb145d64652a948d72533023f6e7a623c7c53
         GROUP BY 1, 2
     ),
     tusd AS (
@@ -302,4 +312,6 @@ WITH
 SELECT *
 FROM balances_tt
 WHERE dt > date '2020-01-01'
+--AND (DATE_TRUNC('MONTH', dt) + INTERVAL '1' MONTH - INTERVAL '1' DAY = dt  -- Last day of each month
+--     OR dt = (SELECT MAX(dt) FROM balances))  -- Latest day of current month
 ORDER BY dt ASC, balance DESC
