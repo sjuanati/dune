@@ -3,7 +3,8 @@
 -- @author: Steakhouse Financial
 -- @description: Shows MKR buyback as the combination of MKR burned, MKR in treasury and MKR in Maker's Uniswap LP position
 -- @version:
-    - 1.0 - 2024-07-01 - Initial version
+    1.0 - 2024-07-01 - Initial version
+    2.0 - 2024-09-24 - Fixed amount conversion in mkr mint & burn (cte mkr_dao_wallet)
 */
 
 with
@@ -133,11 +134,11 @@ with
             where 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb in ("from", "to")
             and "from" != "to"
             union all
-            select date(evt_block_time) as dt, wad / 1e18 as amount
+            select date(evt_block_time) as dt, wad * 1e0 as amount
             from maker_ethereum.mkr_evt_Mint
             where guy = 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb
             union all
-            select date(evt_block_time) as dt, -wad / 1e18 as amount
+            select date(evt_block_time) as dt, -(wad * 1e0) as amount
             from maker_ethereum.mkr_evt_Burn
             where guy = 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb
         ) w using (dt)
