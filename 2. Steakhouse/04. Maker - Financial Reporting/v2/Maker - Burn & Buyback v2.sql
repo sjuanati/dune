@@ -1,10 +1,11 @@
 /*
--- @title: Maker - Burn & Buyback
+-- @title: Burn & Buyback
 -- @author: Steakhouse Financial
 -- @description: Shows MKR/SKY buyback as the combination of MKR burned, MKR/SKY in treasury and MKR/SKY in Maker's Uniswap LP position
 -- @version:
     - 1.0 - 2024-07-01 - Initial version
     - 2.0 - 2024-09-24 - Fixed MKR treasury amount + added SKY/USDS pool
+    - 3.0 - 2024-10-27 - Fixed 0 value in lp_sky_amount & lp_usds_amount when no Sync events for the latest day
 */
 
 with
@@ -83,10 +84,10 @@ with
     uni_reserves as (
         select
             dt,
-            max(if(contract_address = 0x517F9dD285e75b599234F7221227339478d0FcC8, reserve0, 0)) as dai_amount,
-            max(if(contract_address = 0x517F9dD285e75b599234F7221227339478d0FcC8, reserve1, 0)) as mkr_amount,
-            max(if(contract_address = 0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c, reserve0, 0)) as sky_amount,
-            max(if(contract_address = 0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c, reserve1, 0)) as usds_amount
+            max(if(contract_address = 0x517F9dD285e75b599234F7221227339478d0FcC8, reserve0, null)) as dai_amount,
+            max(if(contract_address = 0x517F9dD285e75b599234F7221227339478d0FcC8, reserve1, null)) as mkr_amount,
+            max(if(contract_address = 0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c, reserve0, null)) as sky_amount,
+            max(if(contract_address = 0x2621CC0B3F3c079c1Db0E80794AA24976F0b9e3c, reserve1, null)) as usds_amount
         from (
             select
                 date(evt_block_time) as dt,
