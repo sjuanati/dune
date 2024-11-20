@@ -4,12 +4,14 @@
 -- @description: Shows MKR/SKY buyback as the combination of MKR burned, MKR/SKY in treasury and MKR/SKY in Maker's Uniswap LP position
 -- @version:
     - 1.0 - 2024-07-01 - Initial version
-    - 2.0 - 2024-09-24 - Fixed MKR treasury amount + added SKY/USDS pool
+    - 2.0 - 2024-09-24 - Fixed MKR treasury amount, added SKY/USDS pool
     - 3.0 - 2024-10-27 - Fixed 0 value in lp_sky_amount & lp_usds_amount when no Sync events for the latest day
+    - 4.0 - 2024-11-16 - Added SKY treasury amount & SKY buyback amount
+    - 5.0 - 2024-11-17 - Added SKY-and-MKR metrics and updated chart to integrate MKR/SKY buyback process
 */
 
 with
-    period as (
+    periods as (
         select dt from unnest(sequence(date '2020-01-01', current_date, interval '1' day)) as d(dt)
     ),
     -- LP amounts in Uniswap V2 pools: DAI/MKR and SKY/USDS
@@ -119,13 +121,13 @@ with
             select
                 p.dt,
                 w.lp_amount,
-                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then w.lp_amount else 0 end as lp_amount_dai_mkr,
-                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then w.lp_amount else 0 end as lp_amount_sky_usds,
-                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then (w.lp_amount / t.lp_amount) * r.dai_amount else 0 end as dai_amount,
-                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then (w.lp_amount / t.lp_amount) * r.mkr_amount else 0 end as mkr_amount,
-                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then (w.lp_amount / t.lp_amount) * r.sky_amount else 0 end as sky_amount,
-                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then (w.lp_amount / t.lp_amount) * r.usds_amount else 0 end as usds_amount
-            from period p
+                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then w.lp_amount else null end as lp_amount_dai_mkr,
+                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then w.lp_amount else null end as lp_amount_sky_usds,
+                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then (w.lp_amount / t.lp_amount) * r.dai_amount else null end as dai_amount,
+                case when t.pool = 'dai-mkr' and w.pool = 'dai-mkr' then (w.lp_amount / t.lp_amount) * r.mkr_amount else null end as mkr_amount,
+                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then (w.lp_amount / t.lp_amount) * r.sky_amount else null end as sky_amount,
+                case when t.pool = 'sky-usds' and w.pool = 'sky-usds' then (w.lp_amount / t.lp_amount) * r.usds_amount else null end as usds_amount
+            from periods p
             left join uni_lp_total t on p.dt = t.dt
             left join uni_reserves r on p.dt = r.dt
             left join uni_lp_wallets_cum w on p.dt = w.dt and w.address = 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb -- Maker's DAO wallet
@@ -162,12 +164,12 @@ with
             ) as lp_usds_amount
         from lp_underlying_assets
     ),
-    -- MKR amount held in Maker's DAO wallet
+    -- MKR amount held in DS Proxy
     mkr_dao_wallet as (
         select
             dt,
             sum(coalesce(w.amount, 0)) / 1e18 as mkr_amount
-        from period p
+        from periods p
         left join (
             select
                 date(evt_block_time) as dt,
@@ -189,7 +191,7 @@ with
         ) w using (dt)
         group by 1
     ),
-    -- Cumulative MKR amount held in Maker's DAO wallet
+    -- Cumulative MKR amount held in DS Proxy
     mkr_dao_wallet_cum as (
         select
             dt,
@@ -201,7 +203,7 @@ with
         select
             dt,
             sum(b.burn_mkr_amount) as burn_mkr_amount
-        from period p
+        from periods p
         left join (
             select
                 date(k.evt_block_time) as dt,
@@ -227,50 +229,58 @@ with
             sum(coalesce(burn_mkr_amount, 0)) over (order by dt asc) as burn_mkr_amount
         from mkr_burned
     ),
-    -- Final query grouping all metrics to be shown in the chart
+    -- SKY amount held in DS Proxy
+    sky_dao_wallet as (
+        select
+            dt,
+            sum(coalesce(w.amount, 0)) / 1e18 as sky_amount
+        from periods p
+        left join (
+            select
+                date(evt_block_time) as dt,
+                case
+                    when "from" = 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb then -value
+                    when "to" = 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb then value
+                end as amount
+            from sky_ethereum.SKY_evt_Transfer
+            where 0xbe8e3e3618f7474f8cb1d074a26affef007e98fb in ("from", "to")
+            and "from" != "to"
+        ) w using (dt)
+        group by 1
+    ),
+    -- Cumulative SKY amount held in DS Proxy
+    sky_dao_wallet_cum as (
+        select
+            dt,
+            sum(coalesce(sky_amount, 0)) over (order by dt asc) as treasury_sky_amount
+        from sky_dao_wallet
+    ),
+    -- Final query grouping all metrics
     totals as (
         select
             dt,
-            coalesce(u.lp_amount_sky_usds, 0) as lp_amount_sky_usds,
-            coalesce(u.lp_amount_dai_mkr, 0) as lp_amount_dai_mkr,
-            coalesce(u.lp_dai_amount, 0) as lp_dai_amount,
-            coalesce(u.lp_mkr_amount, 0) as lp_mkr_amount,
-            coalesce(u.lp_sky_amount, 0) as lp_sky_amount,
-            coalesce(u.lp_usds_amount, 0) as lp_usds_amount,
-            w.treasury_mkr_amount as treasury_mkr_amount,
-            b.burn_mkr_amount as burn_mkr_amount,
-            coalesce(u.lp_mkr_amount, 0) + w.treasury_mkr_amount + b.burn_mkr_amount as buyback_mkr_amount
+            if(u.lp_amount_sky_usds < 1e-6, 0, u.lp_amount_sky_usds) as lp_amount_sky_usds,
+            if(u.lp_amount_dai_mkr < 1e-6, 0, u.lp_amount_dai_mkr) as lp_amount_dai_mkr,
+            if(u.lp_dai_amount < 1e-6, 0, u.lp_dai_amount) as lp_dai_amount,
+            if(u.lp_mkr_amount < 1e-6, 0, u.lp_mkr_amount) as lp_mkr_amount,
+            if(u.lp_sky_amount < 1e-6, 0, u.lp_sky_amount) as lp_sky_amount,
+            if(u.lp_usds_amount < 1e-6, 0, u.lp_usds_amount) as lp_usds_amount,
+            u.lp_sky_amount / 24000 as lp_sky_to_mkr_amount,
+            coalesce(w.treasury_mkr_amount, 0) as treasury_mkr_amount,
+            coalesce(s.treasury_sky_amount, 0) as treasury_sky_amount,
+            coalesce(w.treasury_mkr_amount, 0) + coalesce(s.treasury_sky_amount / 24000, 0) as treasury_sky_and_mkr_amount,
+            coalesce(b.burn_mkr_amount, 0) as burn_mkr_amount,
+            coalesce(u.lp_mkr_amount, 0) + w.treasury_mkr_amount + b.burn_mkr_amount as buyback_mkr_amount,
+            u.lp_sky_amount + s.treasury_sky_amount as buyback_sky_amount,
+            coalesce(lp_mkr_amount, 0) + coalesce(lp_sky_amount / 24000, 0) as lp_mkr_and_sky_amount,
+            coalesce(u.lp_mkr_amount, 0) + coalesce(w.treasury_mkr_amount, 0) + b.burn_mkr_amount
+            + coalesce(u.lp_sky_amount / 24000, 0) + coalesce(s.treasury_sky_amount / 24000, 0) as buyback_mkr_and_sky_amount,
+            1000000 - coalesce(u.lp_mkr_amount, 0) - coalesce(w.treasury_mkr_amount, 0) - b.burn_mkr_amount
+            - coalesce(u.lp_sky_amount / 24000, 0) - coalesce(s.treasury_sky_amount / 24000, 0) as remaining_mkr_amount
         from lp_underlying_assets_cum u
         join mkr_dao_wallet_cum w using(dt)
+        join sky_dao_wallet_cum s using(dt)
         join mkr_burned_cum b using(dt)
     )
 
 select * from totals order by 1 desc
-
-
--- Swap fees to be potentially used in the Balance Sheet
-/*
-    -- Fees from swaps
-    uni_swap_fees as (
-        select
-            sum(
-                case
-                    when token_sold_address = 0x6b175474e89094c44da98b954eedeac495271d0f -- DAI
-                    then token_sold_amount * 0.003
-                    else 0
-                end
-            ) as dai_fee,
-            sum(
-                case
-                    when token_sold_address = 0x9f8f72aa9304c8b593d555f12ef6589cc3a579a2 -- MKR
-                    then token_sold_amount * 0.003
-                    else 0
-                end
-            ) as mkr_fee
-        from uniswap_v2_ethereum.trades
-        where blockchain = 'ethereum'
-          and project = 'uniswap'
-          and block_date > date '2020-06-01'
-          and project_contract_address = 0x517F9dD285e75b599234F7221227339478d0FcC8 -- Uniswap V2 DAI/MKR
-    ),
-*/
