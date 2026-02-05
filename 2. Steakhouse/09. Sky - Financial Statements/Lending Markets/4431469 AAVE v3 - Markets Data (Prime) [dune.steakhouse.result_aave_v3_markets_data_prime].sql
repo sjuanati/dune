@@ -1,0 +1,1 @@
+select * from "query_4023865(chain='ethereum', instance='prime')"

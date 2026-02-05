@@ -1,0 +1,1 @@
+select * from "query_6207312(chain='avalanche_c', instance='main')"

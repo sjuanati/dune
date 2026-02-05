@@ -1,0 +1,97 @@
+wallet_address,wallet_label,code,varfix
+0x464c71f6c2f760dda6093dcb91c24c39e5d6e18c,Aave,AAVE-001,Variable
+0x78c180cf113fe4845c325f44648b6567bc79d6e0,Aegis,DELEGATES,Fixed
+0x167c1a762b08d7e78dbf8f24e5c3f1ab415021d3,Bonapublica,DELEGATES,Fixed
+0xb6c09680d822f162449cdfb8248a7d3fc26ec9bf,BLUE,DELEGATES,Fixed
+0xc2982e72d060cab2387dba96b846acb8c96eff66,Byteron,DELEGATES,Fixed
+0xd740882b8616b50d0b317fdff17ec3f4f853f44f,CES Team Wallet,CES-001,Fixed
+0x25307ab59cd5d8b4e2c01218262ddf6a89ff86da,CES Auditor Wallet,CES-001,Fixed
+0xfb5e1d841bda584af789bdfabe3c6419140ec065,Chainlink Keepers,CHAINLINK,Variable
+0xa7364a1738d0bb7d1911318ca3fb3779a8a58d7b,Ennoia Cloaky,DELEGATES,Fixed
+0x869b6d5d8fa7f4ffdaca4d23ffe0735c5ed1f818,Kohla Cloaky,DELEGATES,Fixed
+0x73dfc091ad77c03f2809204fcf03c0b9dccf8c7a,Kohla Cloaky,DELEGATES,Fixed
+0x9244f47d70587fa2329b89b6f503022b63ad54a5,Cloaky,DELEGATES,Fixed
+0xdcaf2c84e1154c8ddd3203880e5db965bff09b60,Content Prod Multisig 1,OLD-001,Fixed
+0x6a0ce7dbb43fe537e3fd0be12dc1882393895237,Content Prod Multisig 2,OLD-001,Fixed
+0xfca6e196c2ad557e64d9397e283c2afe57344b75,Ecosystem Facilitator Role (Operational),ECO-001,Fixed
+0x0f04a22b62a26e25a29cba5a595623038ef7ace7,Excel,DELEGATES,Fixed
+0x1ee3eca7aef17d1e74ed7c447ccba61ac76adba9,GovCom Multisig + Continuous Operation 1,COM-001,Fixed
+0x99e1696a680c0d9f426be20400e468089e7fdb0f,GovCom Multisig + Continuous Operation 2,COM-001,Fixed
+0x34d8d61050ef9d2b48ab00e6dc8a8ca6581c5d63,Foundation Operational Wallet,DAIF-001,Fixed
+0x5f5c328732c9e52dfcb81067b8ba56459b33921f,Foundation Reserves,DAIF-001,Fixed
+0x56349a38e09f36039f6af77309690d217beaf0bf,DECO Ops + DECO Protocol Wallets 1,DECO-001,Fixed
+0xa78f1f5698f8d345a14d7323745c6c56fb8227f0,DECO Ops + DECO Protocol Wallets 2,DECO-001,Fixed
+0xf482d1031e5b172d42b2daa1b6e5cbf6519596f7,DECO Auditor Wallet,DECO-001,Fixed
+0x7327aed0ddf75391098e8753512d8aec8d740a1f,Data Insights Wallet,DIN-001,Fixed
+0xbe8e3e3618f7474f8cb1d074a26affef007e98fb,DS Pause Proxy,DSPP,Variable
+0x8cd0ad5c55498aacb72b6689e1da5a284c69c0c7,DUX Team Wallet,DUX-001,Fixed
+0x5a994d8428ccebcc153863ccda9d2be6352f89ad,DUX Auditor Wallet,DUX-001,Fixed
+0x9e72629df4fcaa2c2f5813fbbdc55064345431b1,Endgame Edge,EGE-001,Variable
+0x3d274fbac29c92d2f624483495c0113b44dbe7d2,Events Multisig,EVENTS-001,Fixed
+0xf3f868534fad48ef5a228fe78669cf242745a755,JanSky,DELEGATES,Fixed
+0xf478a08c41ad06e8d957d5e6b6bcde7452cee962,Jetstream Auditor,JTS-001,Variable
+0x252abaee2f4f4b8d39e5f12b163edfb7fac7aed7,JuliaChang,DELEGATES,Fixed
+0x3c5142f28567e6a0f172fd0baaf1f2847f49d02f,Launch Project (SKY),LAUNCH,Variable
+0x2b6180b413511ce6e3da967ec503b2cc19b78db6,Oracle Gas Cost Multisig + Emergency Fund 1,GAS,Variable
+0x1a5b692029b157df517b7d21a32c8490b8692b0f,Oracle Gas Cost Multisig + Emergency Fund 2,GAS,Variable
+0x478c7ce3e1df09130f8d65a23ad80e05b352af62,Gelato Keepers,GELATO,Variable
+0x926c21602fec84d6d0fa6450b40edba595b5c6e4,Gelato Keepers,GELATO,Variable
+0x0b5a34d084b6a5ae4361de033d1e6255623b41ed,Gelato Keepers,GELATO,Variable
+0xc6a048550c9553f8ac20fbdeb06f114c27eccabb,Gelato Keepers,GELATO,Variable
+0x01d26f8c5cc009868a4bf66e268c17b057ff7a73,GovAlpha Multisig,GOV-001,Fixed
+0x569fad613887ddd8c1815b56a00005bca7fda9c0,Governance Security Engineering,GOVSEC,Variable
+0x7800c137a645c07132886539217ce192b9f0528e,Growth Emergency Multisig,GRO-001,Fixed
+0x73f09254a81e1f835ee442d1b3262c1f1d7a13ff,Interim Multisig,INTERIM,Fixed
+0x0048fc4357db3c0f45adea433a07a20769ddb0cf,Interim Multisig,INTERIM,Fixed
+0xb5bb14252099caef65912ad2f1bbd9434cf24c38,Immunefi Bounty Payout #37383,BOUNTY,Variable
+0x29d17b5acb1c68c574712b11f36c859f6fbdbe32,Immunefi Bounty Payout #38567,BOUNTY,Variable
+0x7119f398b6c06095c6e8964c1f58e7c1baa79e18,Immunefi Bounty Payout #38567,BOUNTY,Variable
+0x124c759d1084e67b19a206ab85c4527fab26c342,IS Ops Wallet,IS-001,Fixed
+0xd1f2eef8576736c1eba36920b957cd2af07280f4,IS Auditor Wallet,IS-001,Fixed
+0x37b375e3d418fbecba6b283e704f840ab32f3b3c,Keep3r Keepers,KEEP3R,Variable
+0xaefed819b6657b3960a8515863abe0529dfc444a,Keep3r Keepers,KEEP3R,Variable
+0x53ccaa8e3bef14254041500acc3f1d4edb5b6d24,Oracle Multisig,Emergency Multisig 1,ORA-001
+0x2d09b7b95f3f312ba6ddfb77ba6971786c5b50cf,Oracle Multisig,Emergency Multisig 2,ORA-001
+0x8d4df847db7ffe0b46af084fe031f7691c6478c2,PBG,DELEGATES,Fixed
+0xe2c16c308b843ed02b09156388cb240ced58c01c,PE Core Unit Multisig + PE Continuous Ops Multisig 1,PE-001,Fixed
+0x83e36aaa1c7b99e2d3d07789f7b70fce46f0d45e,PE Core Unit Multisig + PE Continuous Ops Multisig 2,PE-001,Fixed
+0xfccf5c51d16bb0d049ffe7db604a6a80b5877bfe,Protocol Engineering,PE-001,Fixed
+0x868b44e8191a2574334deb8e7efa38910df941fa,Multichain Engineering,MULTICHAIN,Variable
+0xb386bc4e8bae87c3f67ae94da36f385c100a370a,New Risk Multisig,RISK-001,Fixed
+0x115f76a98c2268dae6c1421eb6b08e4e1df525da,Phoenix Labs (Auditor),PHX-001,Variable
+0x19891541842162ad4311f14055e7221406213d67,Phoenix Labs (Operational),PHX-001,Variable
+0x1378056c0cdd771de52a111e2777293516fa910c,Resilience Research Project,RESEARCH,Variable
+0xd98ef20520048a35eda9a202137847a62120d2d9,Risk Multisig,RISK-001,Fixed
+0xc31637bda32a0811e39456a59022d2c386cb2c85,Rocky,DELEGATES,Fixed
+0x9e1585d9ca64243ce43d42f7dd7333190f66ca09,RWF Core Unit Multisig + Operational 1,RWF-001,Fixed
+0xd1505ee500791490de8642353ba6a5b92e3550f7,RWF Core Unit Multisig + Operational 2,RWF-001,Fixed
+0x96d7b01cc25b141520c717fa369844d34ff116ec,RWF Auditor Wallet,RWF-001,Fixed
+0x465aa62a82e220b331f5ecca697c20e89554b298,SAS Team Wallet,SAS-001,Fixed
+0xb1f950a51516a697e103aaa69e152d839182f6fe,SAS Auditor Wallet,SAS-001,Fixed
+0xb5eb779ce300024edb3df9b6c007e312584f6f4f,SES Multisigs (Permanent Team,Incubation,Grants) 1
+0x7c09ff9b59baaebfd721cbda3676826aa6d7bae8,SES Multisigs (Permanent Team,Incubation,Grants) 2
+0xf95eb8ec63d6059ba62b0a8a7f843c7d92f41de2,SES Multisigs (Permanent Team,Incubation,Grants) 3
+0x87acdd9208f73bfc9207e1f6f0fde906bca95cc6,SES Multisig (Auditor),SES-001,Fixed
+0x87ecaaaced3a02a37e7075dc45d3feb49867d135,Sidestream (Auditor),SSA-001,Variable
+0x483413cccd796deddee88e4d3e202425d5e891c6,Sky Fortification Foundation,FORTIFY,Variable
+0xca5183fb9997046fbd9ba8113139bf5a5af122a0,Sky Frontier Foundation,FRONT,Variable
+0xd8507ef0a59f37d15b5d7b630fa6eea40ce4afdd,Sky Accessibility Facilitator,SKY-ECO,Variable
+0xd6891d1dffda6b0b1af3524018a1ee2e608785f7,Sky Accessibility Facilitator (Integration Boost Budget),SKY-ECO,Variable
+0x3300f198988e4c9c63f75df86de36421f06af8c4,Spark SubDAO Proxy,SPK-SUBDAO,Variable
+0x1369f7b2b38c76b6478c0f0e66d94923421891ba,Grove SubDAO Proxy,GRO-SUBDAO,Variable
+0x8be042581f581e3620e29f213ea8b94afa1c8071,OBEX SubDAO Proxy,OBX-SUBDAO,Variable
+0xf737c76d2b358619f7ef696cf3f94548fecec379,Steakhouse SF Multisig,SF-001,Fixed
+0x955993df48b0458a01cfb5fd7df5f5dca6443550,Strategic Happiness Wallet 1,SH-001,Fixed
+0xc657ac882fb2d6ccf521801da39e910f8519508d,Strategic Happiness Wallet 2,SH-001,Fixed
+0x6d348f18c88d45243705d4fdeeb6538c6a9191f1,StarkNet Team Wallet,SNE-001,Fixed
+0xb2b86a130b1ec101e4aed9a88502e08995760307,Tango,DELEGATES,Fixed
+0x2dc0420a736d1f40893b9481d8968e4d7424bc0b,TechOps,TECH-001,Fixed
+0x1a3da79ee7db30466ca752de6a75def5e635b2f6,TechOps Auditor Wallet,TECH-001,Fixed
+0x5a6007d17302238d63ab21407ff600a67765f982,Techops Keepers,TECHOPS,Variable
+0x2474937cb55500601bcce9f4cb0a0a72dc226f61,Vigilant,DELEGATES,Fixed
+0xa1e62c6321eed0ecfcf2f382c8c82fd940d83c07,Viridian Protector Advisory Company,VPAC-001,Variable
+0xbb8aa212267477c3dbff6643e497919ec2e3dec9,Viridian Protector Advisory Company (Auditor),VPAC-001,Fixed
+0xebce83e491947adb1396ee7e55d3c81414fb0d47,WBC,DELEGATES,Fixed
+0x210cfcf53d1f9648c1c4dcaee677f0cb06914364,Core Council Budget Multisig,COUNCIL,Variable
+0x37fc5d447c8c54326c62b697f674c93ead2a93a3,Core Council Delegate Multisig,DELEGATES,Variable
+0x64a2b7cfa832fe83be6a7c1a67521b350519b9c1,Core Council Executor Agent 1,COUNCIL,Variable
